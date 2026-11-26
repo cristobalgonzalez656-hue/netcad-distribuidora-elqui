@@ -1,0 +1,2497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NetCAD — Diseño, Trazado y Cubicación de Red UTP | Distribuidora Elqui SpA</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af',
+              900: '#0f172a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Estilos técnicos y de impresión profesional */
+    body {
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+    .cad-grid {
+      background-image:
+        linear-gradient(to right, rgba(148, 163, 184, 0.14) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.14) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .tab-btn.active {
+      background-color: #1d4ed8;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
+    }
+    /* Animación suave para rutas de alerta */
+    @keyframes dashPulse {
+      to {
+        stroke-dashoffset: -24;
+      }
+    }
+    .route-violation {
+      animation: dashPulse 1s linear infinite;
+    }
+    /* Transición suave para puerta de vidrio del rack y resaltado de puertos */
+    .rack-glass-door {
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .rack-port-btn:hover {
+      filter: brightness(1.25);
+    }
+    /* Estilos optimizados para Exportar / Imprimir Informe Técnico Completo */
+    @media print {
+      @page {
+        size: landscape;
+        margin: 10mm;
+      }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10pt !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .tab-panel {
+        display: block !important;
+        page-break-after: always;
+        margin-bottom: 18px;
+        border: none !important;
+        box-shadow: none !important;
+      }
+      .tab-panel:last-child {
+        page-break-after: auto;
+      }
+      .shadow-sm, .shadow-md, .shadow-lg {
+        box-shadow: none !important;
+      }
+      table {
+        font-size: 8.5pt !important;
+      }
+    }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Portada formal visible únicamente al Exportar / Imprimir Informe -->
+  <div class="print-only hidden border-2 border-slate-800 rounded-xl p-6 mb-6 bg-white">
+    <div class="flex justify-between items-start border-b-2 border-slate-800 pb-4 mb-4">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-widest text-blue-700">INACAP Sede La Serena · Área Electricidad, Electrónica y Telecomunicaciones</span>
+        <h1 class="text-2xl font-extrabold text-slate-900 mt-1">INFORME TÉCNICO DE INFRAESTRUCTURA DE REDES (TCB304)</h1>
+        <p class="text-sm font-medium text-slate-600 mt-0.5">Unidad 3: Diseño, Trazado y Cubicación de Red UTP Cat 6, Red Inalámbrica y Videovigilancia IP</p>
+      </div>
+      <div class="text-right font-mono text-xs bg-slate-100 p-3 rounded-lg border border-slate-300">
+        <div><strong>CLIENTE:</strong> Distribuidora Elqui SpA</div>
+        <div><strong>NORMATIVA:</strong> ANSI/TIA-568.2-D / 569 / 606</div>
+        <div><strong>MODALIDAD:</strong> Individual (1 Integrante)</div>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-4 text-sm">
+      <div><strong>Autor / Contratista:</strong> <span id="printAuthorName">Cristóbal Plaza</span></div>
+      <div><strong>Asignatura:</strong> Infraestructura de Redes (TCB304)</div>
+      <div><strong>Fecha de Emisión:</strong> <span id="printDate"></span></div>
+    </div>
+  </div>
+
+  <!-- Cabecera Superior Web (Sticky) -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 no-print">
+    <div class="max-w-[1440px] mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <!-- Identidad del Proyecto -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-mono font-extrabold text-lg shadow-inner border border-blue-400">
+          NC
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-base sm:text-lg font-extrabold tracking-tight leading-tight">
+              NetCAD <span class="text-blue-400 font-semibold">| Distribuidora Elqui SpA</span>
+            </h1>
+            <span class="text-[11px] font-mono bg-slate-800 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+              TCB304 · INACAP La Serena
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">
+            Diseño, Trazado y Cubicación de Red UTP Cat 6 · Normas ANSI/TIA-568.2-D, TIA-569 y TIA-606
+          </p>
+        </div>
+      </div>
+
+      <!-- Autor Editable + KPIs Rápidos + Botón Exportar -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <!-- Input Autor Individual -->
+        <div class="flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 rounded-lg px-2.5 py-1.5">
+          <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Autor (1):</span>
+          <input
+            id="authorInput"
+            type="text"
+            value="Cristóbal Plaza"
+            aria-label="Nombre del autor"
+            class="bg-transparent text-xs sm:text-sm font-semibold text-white focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1 w-36"
+          />
+        </div>
+
+        <!-- KPIs en Tiempo Real -->
+        <div class="hidden xl:flex items-center gap-2 text-xs font-mono">
+          <span id="headerKpiLinks" class="bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 px-2.5 py-1.5 rounded-lg">
+            72 Enlaces ≤ 90m
+          </span>
+          <span id="headerKpiBudget" class="bg-blue-950/80 text-blue-300 border border-blue-700/60 px-2.5 py-1.5 rounded-lg">
+            Total c/IVA: $0
+          </span>
+        </div>
+
+        <!-- Botón Exportar / Imprimir Informe -->
+        <button
+          onclick="exportFullReport()"
+          class="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-2 cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          <span>Exportar / Imprimir Informe Completo</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de Navegación por Pestañas (6 Módulos) -->
+    <nav class="bg-slate-800/95 border-t border-slate-700/80 px-4 py-2 overflow-x-auto">
+      <div class="max-w-[1440px] mx-auto flex items-center gap-1.5 min-w-max">
+        <button data-tab="tab-plano" class="tab-btn active px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-200 hover:bg-slate-700 transition cursor-pointer">
+          1. Plano y Trazado (TIA-568)
+        </button>
+        <button data-tab="tab-racks" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-200 hover:bg-slate-700 transition cursor-pointer">
+          2. Diseño de Racks y TIA-606
+        </button>
+        <button data-tab="tab-presupuesto" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-200 hover:bg-slate-700 transition cursor-pointer">
+          3. Cubicación y Presupuesto CLP
+        </button>
+        <button data-tab="tab-gantt" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-200 hover:bg-slate-700 transition cursor-pointer">
+          4. Carta Gantt (10 Días)
+        </button>
+        <button data-tab="tab-riesgos" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-200 hover:bg-slate-700 transition cursor-pointer">
+          5. Riesgos (P×I) y Seguridad
+        </button>
+        <button data-tab="tab-defensa" class="tab-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-200 hover:bg-slate-700 transition cursor-pointer">
+          6. Defensa y GitHub (1 Autor)
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Toast / Banner de Notificación Interna (Reemplaza cualquier alert()) -->
+  <div id="toastBanner" class="hidden fixed bottom-5 right-5 z-50 bg-slate-900 text-white border border-blue-500 px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm flex items-center gap-2.5">
+    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+    <span id="toastText">Acción completada</span>
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-1 max-w-[1440px] w-full mx-auto px-4 py-5 space-y-6">
+
+    <!-- ===================================================================== -->
+    <!-- PESTAÑA 1: PLANO ARQUITECTÓNICO Y TRAZADO DE RED (CRITERIOS 2.1, 2.2, 2.5) -->
+    <!-- ===================================================================== -->
+    <section id="tab-plano" class="tab-panel space-y-5">
+      <!-- Resumen de Parámetros del Caso -->
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-bold uppercase text-slate-400">Escala Calibrada</div>
+          <div class="text-lg font-extrabold text-slate-900 font-mono mt-0.5">64,00 × 30,00 m</div>
+          <div class="text-[11px] text-slate-500">+ 12,00 m Patio Carga (76 m)</div>
+        </div>
+        <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-bold uppercase text-slate-400">Salidas de Datos</div>
+          <div class="text-lg font-extrabold text-blue-700 font-mono mt-0.5">62 Bocas</div>
+          <div class="text-[11px] text-slate-500">29 Dobles + 4 Simples (Cat 6)</div>
+        </div>
+        <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-bold uppercase text-slate-400">Red Wi-Fi PoE+</div>
+          <div class="text-lg font-extrabold text-indigo-700 font-mono mt-0.5">6 Access Points</div>
+          <div class="text-[11px] text-slate-500">5 Interior + 1 Exterior IP67</div>
+        </div>
+        <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-bold uppercase text-slate-400">Videovigilancia IP</div>
+          <div class="text-lg font-extrabold text-amber-600 font-mono mt-0.5">4 Cámaras PoE+</div>
+          <div class="text-[11px] text-slate-500">2 Bodega 6m + 2 Andenes IP67</div>
+        </div>
+        <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-bold uppercase text-slate-400">Enlace Más Largo</div>
+          <div id="kpiMaxLink" class="text-lg font-extrabold text-emerald-600 font-mono mt-0.5">54,2 m</div>
+          <div id="kpiMaxLinkSub" class="text-[11px] text-emerald-700 font-medium">Cumple ≤ 90 m (TIA-568)</div>
+        </div>
+        <div class="bg-white rounded-xl p-3.5 border border-slate-200 shadow-sm">
+          <div class="text-[11px] font-bold uppercase text-slate-400">Arquitectura Racks</div>
+          <div id="kpiArchMode" class="text-lg font-extrabold text-slate-900 font-mono mt-0.5">R1 MDF + R2 IDF</div>
+          <div class="text-[11px] text-slate-500">Topología Estrella Jerárquica</div>
+        </div>
+      </div>
+
+      <!-- Barra de Herramientas Interactivas del Plano CAD -->
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3 no-print">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <!-- Selector de Modo (Caso Resuelto vs Simulación Sin R2 > 90m) -->
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Desafío 90m:</span>
+            <button
+              id="btnModeResolved"
+              onclick="setTopologyMode('resolved')"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-sm cursor-pointer transition"
+            >
+              ✓ Caso Resuelto (R1 MDF + R2 IDF Bodega)
+            </button>
+            <button
+              id="btnModeNoR2"
+              onclick="setTopologyMode('no-r2')"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 border border-slate-300 cursor-pointer transition"
+            >
+              ⚠ Simular Sin R2 (Detectar Enlaces &gt; 90 m)
+            </button>
+          </div>
+
+          <!-- Herramienta Regla de Medición -->
+          <div class="flex items-center gap-2">
+            <button
+              id="btnRulerToggle"
+              onclick="toggleRuler()"
+              class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-blue-50 text-slate-800 border border-slate-300 flex items-center gap-1.5 cursor-pointer transition"
+            >
+              <span>📏 Medir Distancia (A → B)</span>
+            </button>
+            <span id="rulerReadout" class="hidden text-xs font-mono bg-blue-50 text-blue-800 border border-blue-200 px-2.5 py-1.5 rounded-lg">
+              Haz clic en el punto inicial (A) del plano...
+            </span>
+          </div>
+        </div>
+
+        <!-- Checkboxes de Capas CAD -->
+        <div class="flex flex-wrap items-center gap-4 pt-2 border-t border-slate-100 text-xs font-medium text-slate-700">
+          <span class="font-bold text-slate-500 uppercase tracking-wider">Capas Visibles:</span>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked onchange="toggleLayer('layer-routes', this.checked)" class="rounded text-blue-600" />
+            <span>Rutas Cableado Estrella</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked onchange="toggleLayer('layer-trays', this.checked)" class="rounded text-blue-600" />
+            <span>Bandejas Portacables (2,70 m / 6,00 m)</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked onchange="toggleLayer('layer-wifi', this.checked)" class="rounded text-indigo-600" />
+            <span>Cobertura Wi-Fi (6 APs)</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked onchange="toggleLayer('layer-cctv', this.checked)" class="rounded text-amber-600" />
+            <span>Áreas Cámaras IP (4 unid.)</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer">
+            <input type="checkbox" checked onchange="toggleLayer('layer-dims', this.checked)" class="rounded text-slate-600" />
+            <span>Cotas Métricas (64 m + 12 m)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Contenedor Principal: Plano SVG + Panel Inspector de Nodo -->
+      <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+        <!-- Lienzo SVG del Plano Calibrado -->
+        <div class="xl:col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm p-3 overflow-x-auto">
+          <div class="flex items-center justify-between mb-2 px-1">
+            <span class="text-xs font-bold text-slate-700">
+              Planta 1° Piso — Distribuidora Elqui SpA (La Serena) · Escala Calibrada: 10 px = 1,00 m
+            </span>
+            <span class="text-[11px] font-mono text-slate-500">
+              Clic en cualquier nodo para inspeccionar etiqueta TIA-606 y longitud
+            </span>
+          </div>
+          <!-- SVG ViewBox: -40 -55 850 420 -> 76m = 760px, 30m = 300px -->
+          <svg
+            id="floorPlanSvg"
+            viewBox="-45 -58 845 415"
+            class="w-full h-auto cad-grid rounded-lg border border-slate-300 select-none"
+          >
+            <defs>
+              <!-- Patrón estanterías bodega -->
+              <pattern id="rackHatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="0" x2="0" y2="8" stroke="#94a3b8" stroke-width="1.5" />
+              </pattern>
+              <!-- Gradiente cobertura WiFi -->
+              <radialGradient id="wifiGrad">
+                <stop offset="0%" stop-color="#6366f1" stop-opacity="0.28" />
+                <stop offset="75%" stop-color="#6366f1" stop-opacity="0.10" />
+                <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0" />
+              </radialGradient>
+              <!-- Gradiente cono cámara IP -->
+              <linearGradient id="camGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.32" />
+                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.04" />
+              </linearGradient>
+              <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#334155" />
+              </marker>
+            </defs>
+
+            <!-- TÍTULO Y FLECHA NORTE -->
+            <text x="0" y="-38" font-size="13" font-weight="800" fill="#0f172a">
+              Caso de estudio — Distribuidora Elqui SpA · Planta 1° piso
+            </text>
+            <text x="0" y="-23" font-size="9" fill="#475569">
+              Altura cielo falso oficinas: 2,70 m · Bodega altura libre: 8,00 m (Bandeja a 6,00 m) · Escala calibrada: 64,00 m frente
+            </text>
+            <!-- Flecha Norte -->
+            <g transform="translate(765, -42)">
+              <text x="0" y="0" font-size="10" font-weight="800" text-anchor="middle" fill="#0f172a">N</text>
+              <line x1="0" y1="26" x2="0" y2="6" stroke="#0f172a" stroke-width="2.5" marker-end="url(#arrow)" />
+            </g>
+
+            <!-- CAPA 1: ARQUITECTURA BASE (0,0 = esquina NO del galpón; 640px = 64m; 300px = 30m) -->
+            <g id="layer-arch">
+              <!-- Fondo interior edificio (64m x 30m) -->
+              <rect x="0" y="0" width="640" height="300" fill="#ffffff" stroke="#0f172a" stroke-width="3" />
+              <!-- Patio de carga exterior (12m x 30m) -->
+              <rect x="640" y="0" width="120" height="300" fill="#f8fafc" stroke="#64748b" stroke-width="1.8" stroke-dasharray="6 4" />
+
+              <!-- Sala Telecomunicaciones MDF (5,0m x 6,0m en esquina SO: x=0..50, y=240..300) -->
+              <rect x="0" y="240" width="50" height="60" fill="#fee2e2" stroke="#0f172a" stroke-width="2" />
+              <text x="25" y="264" font-size="7.5" font-weight="800" text-anchor="middle" fill="#7f1d1d">SALA</text>
+              <text x="25" y="274" font-size="7.5" font-weight="800" text-anchor="middle" fill="#7f1d1d">TELECOM.</text>
+              <text x="25" y="285" font-size="7" font-weight="600" text-anchor="middle" fill="#991b1b">(MDF)</text>
+              <text x="25" y="310" font-size="7.5" text-anchor="middle" fill="#334155">5,0 × 6,0 m</text>
+
+              <!-- Bodega Insumos (x=0..50, y=170..240) -->
+              <rect x="0" y="170" width="50" height="70" fill="#f8fafc" stroke="#0f172a" stroke-width="1.8" />
+              <text x="25" y="203" font-size="7.5" font-weight="600" text-anchor="middle" fill="#334155">Bodega</text>
+              <text x="25" y="213" font-size="7.5" font-weight="600" text-anchor="middle" fill="#334155">insumos</text>
+
+              <!-- Recepción (x=50..130, y=170..300) -->
+              <rect x="50" y="170" width="80" height="130" fill="#ffffff" stroke="#0f172a" stroke-width="1.8" />
+              <text x="90" y="238" font-size="8.5" font-weight="800" text-anchor="middle" fill="#0f172a">RECEPCIÓN</text>
+
+              <!-- Sala de Reuniones (x=130..210, y=170..300) -->
+              <rect x="130" y="170" width="80" height="130" fill="#ffffff" stroke="#0f172a" stroke-width="1.8" />
+              <text x="170" y="233" font-size="8.5" font-weight="800" text-anchor="middle" fill="#0f172a">SALA DE</text>
+              <text x="170" y="244" font-size="8.5" font-weight="800" text-anchor="middle" fill="#0f172a">REUNIONES</text>
+
+              <!-- Gerencia (x=210..280, y=170..300) -->
+              <rect x="210" y="170" width="70" height="130" fill="#ffffff" stroke="#0f172a" stroke-width="1.8" />
+              <text x="245" y="238" font-size="8.5" font-weight="800" text-anchor="middle" fill="#0f172a">GERENCIA</text>
+
+              <!-- Pasillo Central (x=0..280, y=148..170) -->
+              <rect x="1" y="148" width="279" height="22" fill="#f1f5f9" stroke="none" />
+              <text x="140" y="162" font-size="8" font-weight="700" text-anchor="middle" fill="#475569">PASILLO</text>
+              <text x="-4" y="162" font-size="8" font-weight="700" text-anchor="end" fill="#0f172a">Acceso</text>
+
+              <!-- Oficina Abierta 16 puestos (x=0..160, y=0..148) -->
+              <rect x="0" y="0" width="160" height="148" fill="#ffffff" stroke="#0f172a" stroke-width="1.8" />
+              <text x="80" y="68" font-size="9" font-weight="800" text-anchor="middle" fill="#0f172a">OFICINA ABIERTA</text>
+              <text x="80" y="80" font-size="8.5" font-weight="700" text-anchor="middle" fill="#1d4ed8">(16 puestos)</text>
+
+              <!-- Contabilidad (x=160..220, y=0..148) -->
+              <rect x="160" y="0" width="60" height="148" fill="#ffffff" stroke="#0f172a" stroke-width="1.8" />
+              <text x="190" y="68" font-size="8" font-weight="800" text-anchor="middle" fill="#0f172a">CONTA-</text>
+              <text x="190" y="79" font-size="8" font-weight="800" text-anchor="middle" fill="#0f172a">BILIDAD</text>
+
+              <!-- RR.HH. (x=220..280, y=0..148) -->
+              <rect x="220" y="0" width="60" height="148" fill="#ffffff" stroke="#0f172a" stroke-width="1.8" />
+              <text x="250" y="73" font-size="8.5" font-weight="800" text-anchor="middle" fill="#0f172a">RR.HH.</text>
+
+              <!-- Muro divisor Oficinas / Bodega (x=280) -->
+              <line x1="280" y1="0" x2="280" y2="300" stroke="#0f172a" stroke-width="3" />
+
+              <!-- Oficina Bodega (x=280..340, y=240..300) -->
+              <rect x="280" y="240" width="60" height="60" fill="#ffffff" stroke="#0f172a" stroke-width="2" />
+              <text x="310" y="268" font-size="8" font-weight="800" text-anchor="middle" fill="#0f172a">OFICINA</text>
+              <text x="310" y="278" font-size="8" font-weight="800" text-anchor="middle" fill="#0f172a">BODEGA</text>
+
+              <!-- 4 Estanterías de Bodega -->
+              <rect x="370" y="30" width="22" height="180" fill="url(#rackHatch)" stroke="#64748b" stroke-width="1.2" />
+              <rect x="430" y="30" width="22" height="180" fill="url(#rackHatch)" stroke="#64748b" stroke-width="1.2" />
+              <rect x="490" y="30" width="22" height="180" fill="url(#rackHatch)" stroke="#64748b" stroke-width="1.2" />
+              <rect x="550" y="30" width="22" height="180" fill="url(#rackHatch)" stroke="#64748b" stroke-width="1.2" />
+
+              <text x="480" y="265" font-size="11" font-weight="800" text-anchor="middle" fill="#0f172a">
+                BODEGA (altura libre 8 m)
+              </text>
+
+              <!-- Andenes y Patio de Carga -->
+              <rect x="637" y="72" width="6" height="45" fill="#ffffff" />
+              <text x="646" y="97" font-size="8" font-weight="700" fill="#334155">Andén 2</text>
+              <rect x="637" y="175" width="6" height="45" fill="#ffffff" />
+              <text x="646" y="200" font-size="8" font-weight="700" fill="#334155">Andén 1</text>
+
+              <text x="700" y="145" font-size="10" font-weight="800" text-anchor="middle" fill="#0f172a">PATIO DE</text>
+              <text x="700" y="158" font-size="10" font-weight="800" text-anchor="middle" fill="#0f172a">CARGA</text>
+              <text x="700" y="171" font-size="9" font-weight="600" text-anchor="middle" fill="#475569">(exterior)</text>
+            </g>
+
+            <!-- CAPA 2: COBERTURA WI-FI (6 ACCESS POINTS) -->
+            <g id="layer-wifi">
+              <!-- SR-AP01 -->
+              <circle cx="170" cy="220" r="85" fill="url(#wifiGrad)" />
+              <!-- OA-AP01 & OA-AP02 -->
+              <circle cx="55" cy="70" r="95" fill="url(#wifiGrad)" />
+              <circle cx="185" cy="70" r="95" fill="url(#wifiGrad)" />
+              <!-- BOD-AP01 & BOD-AP02 (6m altura cubriendo pasillos estanterías) -->
+              <circle cx="410" cy="120" r="115" fill="url(#wifiGrad)" />
+              <circle cx="530" cy="120" r="115" fill="url(#wifiGrad)" />
+              <!-- PAT-AP01 (Exterior IP67 patio de carga) -->
+              <circle cx="675" cy="145" r="105" fill="url(#wifiGrad)" />
+            </g>
+
+            <!-- CAPA 3: ÁREAS DE COBERTURA CÁMARAS IP (4 UNIDADES) -->
+            <g id="layer-cctv">
+              <!-- BOD-CAM01 (Norte bodega apuntando pasillos) -->
+              <polygon points="355,20 455,155 365,175" fill="url(#camGrad)" />
+              <!-- BOD-CAM02 (Sur bodega apuntando andenes/pasillos) -->
+              <polygon points="585,235 480,100 620,120" fill="url(#camGrad)" />
+              <!-- PAT-CAM01 (Exterior Andén 2) -->
+              <polygon points="642,65 755,35 755,135" fill="url(#camGrad)" />
+              <!-- PAT-CAM02 (Exterior Andén 1) -->
+              <polygon points="642,225 755,160 755,265" fill="url(#camGrad)" />
+            </g>
+
+            <!-- CAPA 4: BANDEJAS PORTACABLES (2,70m Oficinas y 6,00m Bodega) -->
+            <g id="layer-trays">
+              <!-- Troncal principal oficinas sobre cielo falso 2,70m -->
+              <line x1="25" y1="260" x2="25" y2="158" stroke="#0284c7" stroke-width="4" stroke-opacity="0.35" />
+              <line x1="25" y1="158" x2="265" y2="158" stroke="#0284c7" stroke-width="5" stroke-opacity="0.35" />
+              <!-- Ramal norte oficinas -->
+              <line x1="80" y1="158" x2="80" y2="75" stroke="#0284c7" stroke-width="3.5" stroke-opacity="0.3" />
+              <line x1="190" y1="158" x2="190" y2="75" stroke="#0284c7" stroke-width="3.5" stroke-opacity="0.3" />
+              <line x1="250" y1="158" x2="250" y2="75" stroke="#0284c7" stroke-width="3.5" stroke-opacity="0.3" />
+              <!-- Bandeja bodega a 6,00m de altura -->
+              <line x1="265" y1="158" x2="635" y2="158" stroke="#0d9488" stroke-width="5" stroke-opacity="0.35" />
+              <line x1="410" y1="158" x2="410" y2="30" stroke="#0d9488" stroke-width="3.5" stroke-opacity="0.3" />
+              <line x1="530" y1="158" x2="530" y2="30" stroke="#0d9488" stroke-width="3.5" stroke-opacity="0.3" />
+              <line x1="585" y1="158" x2="585" y2="235" stroke="#0d9488" stroke-width="3.5" stroke-opacity="0.3" />
+            </g>
+
+            <!-- CAPA 5: RUTAS DE CABLEADO EN ESTRELLA (RENDERIZADO DINÁMICO JS) -->
+            <g id="layer-routes"></g>
+
+            <!-- CAPA 6: NODOS INTERACTIVOS (RACKS, SALIDAS, APs, CÁMARAS) -->
+            <g id="layer-nodes"></g>
+
+            <!-- CAPA 7: COTAS MÉTRICAS Y ESCALA GRÁFICA -->
+            <g id="layer-dims">
+              <!-- Cota superior 64,00 m -->
+              <line x1="0" y1="-10" x2="640" y2="-10" stroke="#0f172a" stroke-width="1" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+              <text x="320" y="-14" font-size="9" font-weight="700" text-anchor="middle" fill="#0f172a">64,00 m</text>
+
+              <!-- Cota izquierda 30,00 m -->
+              <line x1="-18" y1="0" x2="-18" y2="300" stroke="#0f172a" stroke-width="1" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+              <text x="-23" y="150" font-size="9" font-weight="700" text-anchor="middle" fill="#0f172a" transform="rotate(-90 -23 150)">30,00 m</text>
+
+              <!-- Cotas inferiores 28,00 m + 36,00 m + 12,00 m -->
+              <line x1="0" y1="322" x2="280" y2="322" stroke="#0f172a" stroke-width="1" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+              <text x="140" y="333" font-size="8.5" font-weight="700" text-anchor="middle" fill="#0f172a">28,00 m</text>
+
+              <line x1="280" y1="322" x2="640" y2="322" stroke="#0f172a" stroke-width="1" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+              <text x="460" y="333" font-size="8.5" font-weight="700" text-anchor="middle" fill="#0f172a">36,00 m</text>
+
+              <line x1="640" y1="322" x2="760" y2="322" stroke="#0f172a" stroke-width="1" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+              <text x="700" y="333" font-size="8.5" font-weight="700" text-anchor="middle" fill="#0f172a">12,00 m</text>
+
+              <!-- Escala Gráfica 0 - 10 m -->
+              <g transform="translate(400, 344)">
+                <text x="50" y="-3" font-size="7.5" font-weight="700" text-anchor="middle" fill="#334155">Escala gráfica</text>
+                <rect x="0" y="0" width="20" height="5" fill="#0f172a" />
+                <rect x="20" y="0" width="20" height="5" fill="#ffffff" stroke="#0f172a" stroke-width="0.8" />
+                <rect x="40" y="0" width="20" height="5" fill="#0f172a" />
+                <rect x="60" y="0" width="20" height="5" fill="#ffffff" stroke="#0f172a" stroke-width="0.8" />
+                <rect x="80" y="0" width="20" height="5" fill="#0f172a" />
+                <text x="0" y="13" font-size="7" text-anchor="middle" fill="#0f172a">0</text>
+                <text x="100" y="13" font-size="7" text-anchor="middle" fill="#0f172a">10 m</text>
+              </g>
+            </g>
+
+            <!-- CAPA 8: REGLA INTERACTIVA DE MEDICIÓN -->
+            <g id="layer-ruler"></g>
+          </svg>
+
+          <!-- Leyenda Visual Debajo del Plano -->
+          <div class="flex flex-wrap items-center gap-4 mt-3 pt-2.5 border-t border-slate-100 text-xs text-slate-600">
+            <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-red-600 inline-block"></span> Rack R1 (MDF 32U) / R2 (IDF 12U)</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> Salida Doble Cat 6 (2 bocas)</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-sky-500 inline-block"></span> Salida Simple Cat 6 (1 boca)</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-600 inline-block"></span> Access Point PoE+ (802.3at)</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span> Cámara IP PoE+ (802.3at)</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-5 h-0.5 bg-emerald-600 inline-block"></span> Enlace ≤ 90 m (OK)</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-5 h-0.5 bg-rose-600 inline-block"></span> Enlace &gt; 90 m (Fuera de norma)</span>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Inspector Técnico del Nodo Seleccionado + Justificación R2 -->
+        <div class="space-y-4">
+          <div id="nodeInspector" class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-blue-700">Inspector Técnico TIA-606</span>
+              <span id="inspBadge" class="text-[11px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">≤ 90 m OK</span>
+            </div>
+            <div>
+              <h3 id="inspTitle" class="text-base font-extrabold text-slate-900">R1 — Rack Principal (MDF)</h3>
+              <p id="inspRoom" class="text-xs text-slate-500">Sala de Telecomunicaciones (5,0 × 6,0 m)</p>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-3 border border-slate-200/80 space-y-1.5 text-xs font-mono">
+              <div class="flex justify-between"><span class="text-slate-500">Etiqueta TIA-606:</span><strong id="inspLabel" class="text-slate-900">R1-MDF-32U</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Tipo de Cable:</span><strong id="inspCable" class="text-slate-900">U/UTP Cat 6 LSZH</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Enlace Permanente:</span><strong id="inspLength" class="text-blue-700">Nodo Central</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Puerto Patch Panel:</span><strong id="inspPP" class="text-slate-900">R1-PP1 a PP4</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Puerto Switch:</span><strong id="inspSW" class="text-slate-900">R1-SW1 a SW4</strong></div>
+            </div>
+            <p id="inspDesc" class="text-xs text-slate-600 leading-relaxed">
+              Ubicado en recinto exclusivo cerrado de 5,0 × 6,0 m en la esquina suroeste, con acceso directo a la bandeja troncal sobre cielo falso (2,70 m). Concentra los 65 enlaces de oficinas y el enlace troncal hacia R2 en bodega.
+            </p>
+          </div>
+
+          <!-- Justificación del Desafío > 90m (Sección 8) -->
+          <div class="bg-amber-50/90 rounded-xl border border-amber-300 p-4 space-y-2">
+            <h4 class="text-xs font-extrabold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+              <span>⚡ Solución Desafío 90 m (ANSI/TIA-568.2-D)</span>
+            </h4>
+            <p class="text-xs text-amber-950 leading-relaxed">
+              Los enlaces desde el MDF (SO) hasta los APs/cámaras del fondo de <strong>Bodega</strong> y <strong>Patio de Carga</strong> alcanzan entre <strong>96 m y 118 m</strong> (superando el límite normativo de <strong>90 m</strong> para enlace permanente).
+            </p>
+            <p class="text-xs text-amber-950 leading-relaxed">
+              <strong>Solución adoptada:</strong> Instalación de <strong>Rack Secundario Mural R2 (IDF 12U)</strong> en muro oeste de Bodega (a 38 m del MDF), reduciendo los enlaces de bodega y patio exterior a <strong>18 m – 54 m</strong> (100% dentro de norma).
+            </p>
+          </div>
+
+          <!-- Justificación Red Inalámbrica y Cámaras (Criterio 2.5) -->
+          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-2">
+            <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-800">
+              Criterio 2.5 — Red Wi-Fi y Ferretería PoE+
+            </h4>
+            <ul class="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
+              <li><strong>Oficina Abierta (2 APs) y Sala Reuniones (1 AP):</strong> Montaje en cielo falso (2,70 m) con soporte T-Bar, mitigando atenuación de tabiques.</li>
+              <li><strong>Bodega (2 APs + 2 Cámaras):</strong> Montaje a <strong>6,00 m</strong> en estructura/bandeja apuntando longitudinalmente a los pasillos entre las 4 estanterías metálicas.</li>
+              <li><strong>Patio de Carga (1 AP IP67 + 2 Cámaras IP67):</strong> Cable U/UTP Cat 6 exterior cubierta PE, cajas estancas IP65 y conduit EMT galvanizado apuntando a Andén 1 y 2.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla Completa y Filtrable de Registro de Enlaces (Criterio 2.2) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900">Registro Oficial de Enlaces Permanentes (72 Bocas Totales)</h3>
+            <p class="text-xs text-slate-500">Nomenclatura TIA-606 · Incluye recorrido horizontal en bandeja + bajadas verticales (2,30 m oficinas / variable bodega)</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 no-print">
+            <select id="filterRecinto" onchange="renderLinksTable()" class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 bg-slate-50 font-medium">
+              <option value="ALL">Todos los recintos (72 enlaces)</option>
+              <option value="Oficina Abierta">Oficina Abierta (35)</option>
+              <option value="Contabilidad">Contabilidad (9)</option>
+              <option value="RR.HH.">RR.HH. (6)</option>
+              <option value="Gerencia">Gerencia (4)</option>
+              <option value="Sala de Reuniones">Sala de Reuniones (4)</option>
+              <option value="Recepción">Recepción (3)</option>
+              <option value="Oficina Bodega">Oficina Bodega (4)</option>
+              <option value="Bodega">Bodega 6m (4)</option>
+              <option value="Patio de Carga">Patio de Carga Exterior (3)</option>
+            </select>
+            <input
+              id="searchLinkInput"
+              type="text"
+              oninput="renderLinksTable()"
+              placeholder="Buscar ID (ej. OA-07A, PAT-AP01)..."
+              class="text-xs border border-slate-300 rounded-lg px-2.5 py-1.5 w-48"
+            />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-96 border border-slate-200 rounded-lg">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-100 text-slate-700 sticky top-0 border-b border-slate-200">
+              <tr>
+                <th class="py-2 px-3 font-bold">ID Salida (TIA-606)</th>
+                <th class="py-2 px-3 font-bold">Recinto</th>
+                <th class="py-2 px-3 font-bold">Tipo de Punto</th>
+                <th class="py-2 px-3 font-bold">Cable Especificado</th>
+                <th class="py-2 px-3 font-bold">Rack Destino</th>
+                <th class="py-2 px-3 font-bold">Puerto PP / Switch</th>
+                <th class="py-2 px-3 font-bold text-right">Long. Perm. (m)</th>
+                <th class="py-2 px-3 font-bold text-center">Estado TIA-568</th>
+              </tr>
+            </thead>
+            <tbody id="linksTableBody" class="divide-y divide-slate-100 font-mono"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- PESTAÑA 2: DISEÑO DE RACKS (ELEVACIÓN FRONTAL) Y PLAN TIA-606 (SEC. 6) -->
+    <!-- ===================================================================== -->
+    <section id="tab-racks" class="tab-panel hidden space-y-5">
+      <!-- Cabecera y Controles Principales del Diseñador de Racks -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900">
+              Módulo Interactivo de Elevación Frontal de Racks (19" EIA-310 · U1 a Un)
+            </h2>
+            <p class="text-xs text-slate-500">
+              Haz clic sobre <strong>cualquier equipo</strong> o <strong>puerto RJ45 individual</strong> en la imagen del rack para inspeccionar su contenido, consumo y ruta TIA-606.
+            </p>
+          </div>
+
+          <!-- Selectores de Vista y Puerta de Vidrio -->
+          <div class="flex flex-wrap items-center gap-2 no-print">
+            <button
+              id="btnSelectR1"
+              onclick="selectRackView('R1')"
+              class="px-3 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-sm cursor-pointer transition"
+            >
+              R1 — MDF Sala Telecom (Piso 32U)
+            </button>
+            <button
+              id="btnSelectR2"
+              onclick="selectRackView('R2')"
+              class="px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 cursor-pointer transition"
+            >
+              R2 — IDF Bodega (Mural 12U)
+            </button>
+            <button
+              id="btnSelectBoth"
+              onclick="selectRackView('BOTH')"
+              class="px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 cursor-pointer transition"
+            >
+              Vista Comparativa (R1 + R2)
+            </button>
+            <button
+              id="btnToggleGlass"
+              onclick="toggleRackGlassDoor()"
+              class="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-sky-300 hover:bg-slate-700 border border-slate-600 cursor-pointer transition flex items-center gap-1.5"
+              title="Simular puerta frontal de vidrio templado"
+            >
+              <span>🚪 Puerta Vidrio: Abierta</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 4 Tarjetas KPI de Capacidad, Reserva >= 30% y Consumo Eléctrico -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 uppercase">Espacio (U) Libre</span>
+              <span id="badgeUStatus" class="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">≥ 30% OK</span>
+            </div>
+            <div id="metricUFree" class="text-xl font-extrabold text-emerald-600 font-mono mt-0.5">40,6%</div>
+            <div id="metricUDetail" class="text-[11px] text-slate-600">13U libres / 32U totales</div>
+          </div>
+
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 uppercase">Puertos Patch Panel</span>
+              <span id="badgePPStatus" class="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">≥ 30% OK</span>
+            </div>
+            <div id="metricPPFree" class="text-xl font-extrabold text-emerald-600 font-mono mt-0.5">30,2%</div>
+            <div id="metricPPDetail" class="text-[11px] text-slate-600">29 libres / 96 puertos</div>
+          </div>
+
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 uppercase">Puertos Switches</span>
+              <span id="badgeSWStatus" class="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">≥ 30% OK</span>
+            </div>
+            <div id="metricSWFree" class="text-xl font-extrabold text-emerald-600 font-mono mt-0.5">30,2%</div>
+            <div id="metricSWDetail" class="text-[11px] text-slate-600">29 libres / 96 puertos</div>
+          </div>
+
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-500 uppercase">Carga Eléctrica / UPS</span>
+              <span class="text-[10px] font-mono font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">Respaldo OK</span>
+            </div>
+            <div id="metricPowerWatts" class="text-xl font-extrabold text-blue-700 font-mono mt-0.5">345 W</div>
+            <div id="metricPowerDetail" class="text-[11px] text-slate-600">UPS 2000VA (Carga 24%)</div>
+          </div>
+        </div>
+
+        <!-- Área Principal: Imagen Vectorial Interactiva del Rack + Panel Inspector Detallado -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+          <!-- Columna Izquierda (7 cols): Lienzo Visual Interactivo del Rack -->
+          <div class="xl:col-span-7 bg-slate-950 rounded-2xl p-4 border border-slate-800 shadow-inner">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-800">
+              <div>
+                <h3 id="rackCanvasTitle" class="text-sm font-extrabold text-blue-400">
+                  R1 — Gabinete Rack de Piso 32U (Sala Telecomunicaciones MDF)
+                </h3>
+                <p id="rackCanvasSubtitle" class="text-[11px] text-slate-400">
+                  19" EIA-310 · 600×800 mm · Clic en un chasis o puerto RJ45 para inspeccionar
+                </p>
+              </div>
+              <div class="flex items-center gap-2 text-[10px] font-mono">
+                <span class="inline-flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span>Datos</span>
+                <span class="inline-flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block"></span>PoE+</span>
+                <span class="inline-flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-sm bg-purple-500 inline-block"></span>Trunk</span>
+                <span class="inline-flex items-center gap-1 text-slate-300"><span class="w-2.5 h-2.5 rounded-sm bg-slate-700 border border-slate-500 inline-block"></span>Libre</span>
+              </div>
+            </div>
+
+            <!-- Contenedor SVG Interactivo del Rack (Single o Comparativo) -->
+            <div id="rackVisualViewport" class="w-full overflow-x-auto flex justify-center items-start gap-4 py-1"></div>
+          </div>
+
+          <!-- Columna Derecha (5 cols): Panel Inspector del Equipo / Puerto Seleccionado + Catálogo -->
+          <div class="xl:col-span-5 space-y-4">
+            <!-- Tarjeta Inspector del Equipo Activo en el Rack -->
+            <div class="bg-white rounded-xl border-2 border-blue-600/25 shadow-sm p-4 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                  <span class="text-xs font-extrabold uppercase tracking-wider text-blue-700">
+                    Inspector de Contenido del Rack
+                  </span>
+                </div>
+                <span id="inspRackUnitBadge" class="text-xs font-mono font-extrabold bg-slate-900 text-white px-2.5 py-0.5 rounded">
+                  R1 · U29
+                </span>
+              </div>
+
+              <!-- Nombre, Modelo y Controles de Posición U -->
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <h4 id="inspEqTitle" class="text-sm sm:text-base font-extrabold text-slate-900">
+                    Patch Panel 1 — 24 Puertos Cat 6 (R1-PP1)
+                  </h4>
+                  <p id="inspEqSubtitle" class="text-xs text-slate-500">
+                    Recinto: Oficina Abierta (Puestos OA-01A a OA-12B)
+                  </p>
+                </div>
+                <div class="flex items-center gap-1 no-print shrink-0">
+                  <button
+                    onclick="moveSelectedRackItem(1)"
+                    class="px-2 py-1 rounded bg-slate-100 hover:bg-blue-100 text-slate-800 border border-slate-300 text-xs font-bold cursor-pointer"
+                    title="Subir equipo 1U"
+                  >
+                    ▲ U+
+                  </button>
+                  <button
+                    onclick="moveSelectedRackItem(-1)"
+                    class="px-2 py-1 rounded bg-slate-100 hover:bg-blue-100 text-slate-800 border border-slate-300 text-xs font-bold cursor-pointer"
+                    title="Bajar equipo 1U"
+                  >
+                    ▼ U-
+                  </button>
+                  <button
+                    onclick="removeSelectedRackItem()"
+                    class="px-2 py-1 rounded bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-700 border border-rose-200 text-xs font-bold cursor-pointer"
+                    title="Eliminar equipo del rack"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <!-- Especificaciones Técnicas del Equipo Seleccionado -->
+              <div class="grid grid-cols-3 gap-2 bg-slate-50 rounded-lg p-2.5 border border-slate-200/80 text-xs font-mono">
+                <div>
+                  <div class="text-[10px] text-slate-400 uppercase font-sans">Altura / Posición</div>
+                  <strong id="inspEqHeight" class="text-slate-900">1U (Pos. U29)</strong>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-400 uppercase font-sans">Consumo / Carga</div>
+                  <strong id="inspEqPower" class="text-slate-900">Pasivo (0 W)</strong>
+                </div>
+                <div>
+                  <div class="text-[10px] text-slate-400 uppercase font-sans">Ocupación</div>
+                  <strong id="inspEqPortsSummary" class="text-blue-700">24 / 24 Bocas</strong>
+                </div>
+              </div>
+
+              <p id="inspEqDesc" class="text-xs text-slate-600 leading-relaxed">
+                Panel de parcheo modular 19" 1U cargado con 24 jacks RJ45 Cat 6 T568B. Termina los 12 primeros puestos dobles de Oficina Abierta (24 enlaces permanentes).
+              </p>
+
+              <!-- Matriz Interactiva de 24 Puertos (Visible cuando se selecciona Patch Panel o Switch) -->
+              <div id="portInspectorBox" class="bg-slate-900 text-white rounded-xl p-3 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-blue-300">
+                    Matriz Frontal de 24 Puertos (Clic en un puerto)
+                  </span>
+                  <span id="selectedPortTag" class="text-[11px] font-mono bg-blue-600 px-2 py-0.5 rounded font-bold">
+                    R1-PP1-01
+                  </span>
+                </div>
+
+                <!-- 24 Botones de Puerto RJ45 -->
+                <div id="portGrid24" class="grid grid-cols-8 sm:grid-cols-12 gap-1 font-mono text-[10px]"></div>
+
+                <!-- Ruta Completa TIA-606 del Puerto Seleccionado -->
+                <div id="portTraceCard" class="bg-slate-800/95 border border-slate-700 rounded-lg p-2.5 text-xs space-y-1">
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Salida en Plano:</span>
+                    <strong id="traceOutlet" class="font-mono text-emerald-400">OA-01A (Oficina Abierta)</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Patch Panel ➔ Switch:</span>
+                    <strong id="tracePath" class="font-mono text-blue-300">R1-PP1-01 ➔ R1-SW1-01</strong>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-slate-400">Enlace / Servicio:</span>
+                    <strong id="traceMeta" class="font-mono text-slate-200">24,5 m · Datos Gigabit</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Catálogo para Agregar Nuevos Equipos al Rack -->
+            <div class="bg-slate-50 rounded-xl border border-slate-200 p-3.5 space-y-2.5 no-print">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                  Agregar Equipo al Rack (<span id="catalogTargetRackLbl">R1</span>)
+                </h4>
+                <span class="text-[11px] text-slate-500">Clic en U libre del rack para elegir posición</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <select id="catalogItemSelect" class="sm:col-span-8 text-xs border border-slate-300 rounded-lg px-2.5 py-2 bg-white font-medium">
+                  <option value="pp|Patch Panel Cat 6 24p|1">Patch Panel Cat 6, 24 puertos (1U)</option>
+                  <option value="org|Organizador Horizontal 1U|1">Organizador Horizontal Cables (1U)</option>
+                  <option value="sw_gb|Switch 24p Gigabit|1">Switch 24 puertos Gigabit (1U)</option>
+                  <option value="sw_poe|Switch 24p PoE+ (802.3at)|1">Switch 24 puertos PoE+ 802.3at (1U)</option>
+                  <option value="router|Router / Firewall Gigabit 1U|1">Router / Firewall Empresarial (1U)</option>
+                  <option value="tray|Bandeja Fija Módem ISP|1">Bandeja Fija + ONT ISP (1U)</option>
+                  <option value="nvr|NVR Grabador IP 16ch|1">NVR Grabador de Video IP (1U)</option>
+                  <option value="pdu|PDU Regleta Energía 1U|1">PDU Regleta de Energía 8 Tomas (1U)</option>
+                  <option value="ups|UPS Rackeable Online 2000VA|2">UPS Rackeable Respaldo (2U)</option>
+                </select>
+                <div class="sm:col-span-4 flex gap-1.5">
+                  <input
+                    id="targetUInput"
+                    type="number"
+                    min="1"
+                    max="32"
+                    value="15"
+                    class="w-14 text-xs font-mono font-bold border border-slate-300 rounded-lg px-1.5 py-2 bg-white text-center"
+                    title="Posición U inicial"
+                  />
+                  <button
+                    onclick="addEquipmentToRack()"
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg px-2.5 py-2 cursor-pointer transition"
+                  >
+                    + Insertar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plan de Conexionado Completo Norma TIA-606 -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900">Plan de Conexionado y Etiquetado (Norma ANSI/TIA-606)</h3>
+            <p class="text-xs text-slate-500">
+              Formato obligatorio: <code>[Recinto]-[N°][Boca]</code> → <code>[Rack]-PP[N°]-[Puerto]</code> → <code>[Rack]-SW[N°]-[Puerto]</code> (72 enlaces + 2 troncales R1↔R2)
+            </p>
+          </div>
+          <span class="text-xs font-mono bg-blue-50 text-blue-800 border border-blue-200 px-2.5 py-1 rounded-lg">
+            Ejemplo caso: OA-07A → R1-PP1-13 → R1-SW1-13
+          </span>
+        </div>
+
+        <div class="overflow-x-auto max-h-96 border border-slate-200 rounded-lg">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-100 text-slate-700 sticky top-0 border-b border-slate-200">
+              <tr>
+                <th class="py-2 px-3 font-bold">Salida Telecom.</th>
+                <th class="py-2 px-3 font-bold">Etiqueta Cable (Ambos Extremos)</th>
+                <th class="py-2 px-3 font-bold">Puerto Patch Panel</th>
+                <th class="py-2 px-3 font-bold">Patch Cord Rack</th>
+                <th class="py-2 px-3 font-bold">Puerto Switch Destino</th>
+                <th class="py-2 px-3 font-bold">Servicio / PoE+</th>
+              </tr>
+            </thead>
+            <tbody id="patchPlanTableBody" class="divide-y divide-slate-100 font-mono"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- PESTAÑA 3: CUBICACIÓN Y PRESUPUESTO EN CLP + IVA (CRITERIOS 2.3 Y 2.4) -->
+    <!-- ===================================================================== -->
+    <section id="tab-presupuesto" class="tab-panel hidden space-y-5">
+      <!-- Memoria de Cálculo de Metraje de Cable UTP -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+        <h2 class="text-base font-extrabold text-slate-900">Memoria de Cubicación de Cableado Horizontal (ANSI/TIA-568.2-D)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-3.5 space-y-1.5">
+            <div class="font-extrabold text-blue-900 uppercase">1. Cable Interior U/UTP Cat 6 LSZH</div>
+            <div class="flex justify-between"><span>Suma trazados netos (69 enlaces + 2 trunk):</span><strong class="font-mono">2.348,0 m</strong></div>
+            <div class="flex justify-between"><span>Reserva en Rack (71 × 3,0 m):</span><strong class="font-mono">+ 213,0 m</strong></div>
+            <div class="flex justify-between"><span>Reserva en Salida (71 × 0,30 m):</span><strong class="font-mono">+ 21,3 m</strong></div>
+            <div class="flex justify-between"><span>Subtotal antes de merma:</span><strong class="font-mono">2.582,3 m</strong></div>
+            <div class="flex justify-between"><span>Merma constructiva (+10%):</span><strong class="font-mono">+ 258,2 m</strong></div>
+            <div class="flex justify-between border-t border-blue-200 pt-1 text-blue-900 font-bold">
+              <span>Total requerido (Cajas 305 m):</span>
+              <span class="font-mono">2.840,5 m → 10 Cajas (3.050 m)</span>
+            </div>
+          </div>
+
+          <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 space-y-1.5">
+            <div class="font-extrabold text-emerald-900 uppercase">2. Cable Exterior U/UTP Cat 6 Cubierta PE</div>
+            <div class="flex justify-between"><span>Suma trazados netos (3 enlaces Patio Carga):</span><strong class="font-mono">126,0 m</strong></div>
+            <div class="flex justify-between"><span>Reserva en Rack R2 (3 × 3,0 m):</span><strong class="font-mono">+ 9,0 m</strong></div>
+            <div class="flex justify-between"><span>Reserva en Caja Estanca (3 × 0,30 m):</span><strong class="font-mono">+ 0,9 m</strong></div>
+            <div class="flex justify-between"><span>Subtotal antes de merma:</span><strong class="font-mono">135,9 m</strong></div>
+            <div class="flex justify-between"><span>Merma constructiva (+10%):</span><strong class="font-mono">+ 13,6 m</strong></div>
+            <div class="flex justify-between border-t border-emerald-200 pt-1 text-emerald-900 font-bold">
+              <span>Total requerido (Bobina 305 m):</span>
+              <span class="font-mono">149,5 m → 1 Bobina (305 m)</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1.5">
+            <div class="font-extrabold text-slate-900 uppercase">3. Accesorios y Canalización</div>
+            <div class="flex justify-between"><span>Jacks RJ45 Cat 6 (74 activos + 6 repuesto):</span><strong class="font-mono">80 unid.</strong></div>
+            <div class="flex justify-between"><span>Faceplates (29 Dobles + 4 Simples):</span><strong class="font-mono">33 unid.</strong></div>
+            <div class="flex justify-between"><span>Patch Cords 2,0 m (62 puestos + 3 rep.):</span><strong class="font-mono">65 unid.</strong></div>
+            <div class="flex justify-between"><span>Patch Cords 0,5 m Rack (74 + 6 rep.):</span><strong class="font-mono">80 unid.</strong></div>
+            <div class="flex justify-between"><span>Bandeja Portacables (oficinas + bodega):</span><strong class="font-mono">108 m (36 tramos)</strong></div>
+            <div class="flex justify-between border-t border-slate-200 pt-1 font-bold text-slate-900">
+              <span>Canaleta PVC / Conduit EMT:</span>
+              <span class="font-mono">84 m PVC / 66 m EMT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla Interactiva de Presupuesto en CLP + IVA (19%) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">Presupuesto Detallado en Pesos Chilenos (CLP) + IVA (19%)</h3>
+            <p class="text-xs text-slate-500">
+              Valores referenciales de mercado chileno (<strong>Sinthesi Chile</strong>, <strong>LK.cl</strong> y distribuidores nacionales de telecomunicaciones). Cantidades y precios editables.
+            </p>
+          </div>
+          <button
+            onclick="resetBudgetDefaults()"
+            class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-1.5 rounded-lg no-print cursor-pointer"
+          >
+            Restaurar Precios Referenciales
+          </button>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 rounded-lg">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-900 text-white">
+              <tr>
+                <th class="py-2.5 px-3 font-bold">Ítem</th>
+                <th class="py-2.5 px-3 font-bold">Categoría</th>
+                <th class="py-2.5 px-3 font-bold">Descripción Técnica del Material / Servicio</th>
+                <th class="py-2.5 px-3 font-bold">Fuente / Cotización</th>
+                <th class="py-2.5 px-3 font-bold text-right">Cant.</th>
+                <th class="py-2.5 px-3 font-bold text-right">P. Unit. Neto (CLP)</th>
+                <th class="py-2.5 px-3 font-bold text-right">Subtotal Neto (CLP)</th>
+              </tr>
+            </thead>
+            <tbody id="budgetTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+
+        <!-- Totales Consolidados -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 text-xs space-y-1.5">
+            <h4 class="font-extrabold text-slate-800 uppercase">Desglose por Rubro (Neto)</h4>
+            <div class="flex justify-between"><span>Materiales y Equipamiento Activo/Pasivo:</span><strong id="subMaterials" class="font-mono">$0</strong></div>
+            <div class="flex justify-between"><span>Arriendo Herramientas (Plataforma 6m + Certificador):</span><strong id="subTools" class="font-mono">$0</strong></div>
+            <div class="flex justify-between"><span>Mano de Obra (2 Técnicos + 1 Supervisor × 10 días):</span><strong id="subLabor" class="font-mono">$0</strong></div>
+          </div>
+
+          <div class="bg-blue-950 text-white rounded-xl p-4 space-y-2">
+            <div class="flex justify-between text-xs text-blue-200">
+              <span>TOTAL NETO PROYECTO:</span>
+              <strong id="totalNeto" class="font-mono text-sm text-white">$0</strong>
+            </div>
+            <div class="flex justify-between text-xs text-blue-200">
+              <span>IVA (19% Legislación Chile):</span>
+              <strong id="totalIva" class="font-mono text-sm text-amber-300">$0</strong>
+            </div>
+            <div class="flex justify-between items-center border-t border-blue-800 pt-2">
+              <span class="text-sm font-extrabold uppercase tracking-wide">TOTAL GENERAL CON IVA (CLP):</span>
+              <span id="totalGross" class="font-mono text-xl font-extrabold text-emerald-400">$0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- PESTAÑA 4: CARTA GANTT (10 DÍAS HÁBILES) Y METODOLOGÍA (CRITERIO 2.6)  -->
+    <!-- ===================================================================== -->
+    <section id="tab-gantt" class="tab-panel hidden space-y-5">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900">Carta Gantt de Ejecución — Plazo Máximo 10 Días Hábiles</h2>
+            <p class="text-xs text-slate-500">
+              Cuadrilla: <strong>2 Técnicos + 1 Supervisor</strong> (jornada de 9 hrs) · Planificado bajo metodología híbrida <strong>PMBOK / Last Planner</strong>.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2 text-[11px] font-semibold">
+            <span class="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-lg">
+              Oficinas 08:30–18:00: Solo canalización
+            </span>
+            <span class="bg-indigo-100 text-indigo-900 border border-indigo-300 px-2.5 py-1 rounded-lg">
+              Oficinas Post-18:00: Cableado y remate
+            </span>
+            <span class="bg-rose-100 text-rose-900 border border-rose-300 px-2.5 py-1 rounded-lg">
+              Bodega 6m: Plataforma tijera + área segregada
+            </span>
+          </div>
+        </div>
+
+        <!-- Tabla Visual Carta Gantt 10 Días -->
+        <div class="overflow-x-auto border border-slate-200 rounded-lg">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-900 text-white">
+              <tr>
+                <th class="py-2 px-3 font-bold w-12">ID</th>
+                <th class="py-2 px-3 font-bold min-w-[230px]">Actividad / Fase de Obra</th>
+                <th class="py-2 px-3 font-bold">Horario / Restricción</th>
+                <th class="py-2 px-3 font-bold">Responsable</th>
+                <th class="py-2 px-2 text-center font-mono">D1</th>
+                <th class="py-2 px-2 text-center font-mono">D2</th>
+                <th class="py-2 px-2 text-center font-mono">D3</th>
+                <th class="py-2 px-2 text-center font-mono">D4</th>
+                <th class="py-2 px-2 text-center font-mono">D5</th>
+                <th class="py-2 px-2 text-center font-mono">D6</th>
+                <th class="py-2 px-2 text-center font-mono">D7</th>
+                <th class="py-2 px-2 text-center font-mono">D8</th>
+                <th class="py-2 px-2 text-center font-mono">D9</th>
+                <th class="py-2 px-2 text-center font-mono">D10</th>
+              </tr>
+            </thead>
+            <tbody id="ganttTableBody" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+
+        <!-- Justificación de Metodología y Secuencia Crítica -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-xs">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1.5">
+            <h4 class="font-extrabold text-slate-900 uppercase">Metodología de Trabajo y Secuencia Crítica</h4>
+            <p class="text-slate-600 leading-relaxed">
+              Se aplica planificación secuencial por frentes independientes (<strong>Ruta Crítica CPM</strong>) para cumplir los <strong>10 días hábiles</strong> sin interrumpir la operación de Distribuidora Elqui SpA:
+            </p>
+            <ul class="list-disc pl-4 text-slate-600 space-y-1">
+              <li><strong>Frente Diurno Oficinas (Días 1–3):</strong> Instalación de bandeja sobre cielo falso (2,70 m) y canaletas bajada (0,40 m) entre 08:30 y 18:00 sin afectar puestos operativos.</li>
+              <li><strong>Frente Nocturno Oficinas (Días 3–5):</strong> Tendido de cableado U/UTP Cat 6 LSZH, ponchado de jacks y montaje de faceplates fuera de horario laboral (18:30–23:00).</li>
+              <li><strong>Frente Bodega Altura 6 m (Días 4–7):</strong> Segregación perimetral con conos/barreras por tránsito de grúas horquilla (08:00–18:00) y uso de plataforma elevadora tijera.</li>
+            </ul>
+          </div>
+          <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 space-y-1.5">
+            <h4 class="font-extrabold text-blue-900 uppercase">Hitos de Control de Calidad y Entrega (Días 8–10)</h4>
+            <ul class="list-disc pl-4 text-blue-950 space-y-1">
+              <li><strong>Día 8:</strong> Peinado final de racks R1 (32U) y R2 (12U), conexión de UPS/PDU, configuración VLANs/PoE+ y etiquetado integral norma <strong>TIA-606</strong>.</li>
+              <li><strong>Día 9:</strong> <strong>Certificación del 100% de los enlaces permanentes (74 enlaces)</strong> con equipo certificador Cat 6 (NEXT, PSNEXT, Atenuación, Return Loss, Mapa de cableado) y pruebas de cobertura Wi-Fi / NVR.</li>
+              <li><strong>Día 10:</strong> Entrega de carpeta As-Built, reportes de certificación aprobados, capacitación al cliente y recepción conforme.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- PESTAÑA 5: MATRIZ DE RIESGOS (P x I) Y SEGURIDAD (CRITERIO 2.7)       -->
+    <!-- ===================================================================== -->
+    <section id="tab-riesgos" class="tab-panel hidden space-y-5">
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-900">Matriz de Riesgos del Proyecto (Probabilidad × Impacto)</h2>
+            <p class="text-xs text-slate-500">
+              Escala P (1–5) × I (1–5) = Severidad (1–6 Bajo · 8–12 Medio · 15–25 Alto/Crítico). Incluye riesgos técnicos, de plazo y de costo.
+            </p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto border border-slate-200 rounded-lg">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-900 text-white">
+              <tr>
+                <th class="py-2.5 px-3 font-bold">ID</th>
+                <th class="py-2.5 px-3 font-bold">Tipo</th>
+                <th class="py-2.5 px-3 font-bold">Riesgo Identificado en el Escenario</th>
+                <th class="py-2.5 px-3 font-bold text-center">Prob. (1-5)</th>
+                <th class="py-2.5 px-3 font-bold text-center">Imp. (1-5)</th>
+                <th class="py-2.5 px-3 font-bold text-center">P × I</th>
+                <th class="py-2.5 px-3 font-bold">Medida de Mitigación y Control Preventivo</th>
+              </tr>
+            </thead>
+            <tbody id="risksTableBody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+
+        <!-- Protocolo Obligatorio de Seguridad en Obra -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 text-xs">
+          <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-1.5">
+            <h4 class="font-extrabold text-rose-900 uppercase">1. Trabajo en Altura (6,00 m en Bodega)</h4>
+            <p class="text-rose-950 leading-relaxed">
+              Uso obligatorio de <strong>plataforma elevadora tipo tijera certificada</strong> (prohibido usar escaleras de tijera a 6 m), arnés de seguridad de cuerpo completo con cabo de vida doble anclado a baranda de plataforma, casco con barbiquejo y examen de altura física vigente.
+            </p>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-1.5">
+            <h4 class="font-extrabold text-amber-900 uppercase">2. Convivencia con Grúas Horquilla</h4>
+            <p class="text-amber-950 leading-relaxed">
+              Durante el horario operativo de bodega (<strong>08:00 a 18:00</strong>), se delimita un perímetro de exclusión con barreras rígidas, conos reflectantes y señalética de peligro, coordinando con el supervisor de bodega el bloqueo temporal del pasillo intervenido.
+            </p>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-1.5">
+            <h4 class="font-extrabold text-emerald-900 uppercase">3. Seguridad Eléctrica y EPP General</h4>
+            <p class="text-emerald-950 leading-relaxed">
+              Corte y bloqueo (LOTO) antes de conectar UPS/PDU en R1 y R2; puesta a tierra de bandejas portacables y racks; uso permanente de zapatos dieléctricos, guantes anticorte para manipulación de bandeja metálica/conduit EMT y lentes de seguridad.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- PESTAÑA 6: GUÍA DE DEFENSA Y REPOSITORIO GITHUB (CRITERIOS 2.8 Y 2.9)  -->
+    <!-- ===================================================================== -->
+    <section id="tab-defensa" class="tab-panel hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <!-- Estructura GitHub y Comandos para 1 Solo Integrante -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+          <h2 class="text-base font-extrabold text-slate-900">Criterio 2.8 — Repositorio GitHub y Cloudflare Pages (1 Autor)</h2>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Para desplegar esta aplicación en HTTPS mediante <strong>Cloudflare Pages</strong>, guarda este archivo como <code>index.html</code> en la raíz de tu repositorio público de GitHub junto con tu archivo <code>README.md</code>:
+          </p>
+          <pre class="bg-slate-900 text-emerald-300 font-mono text-xs p-3.5 rounded-xl overflow-x-auto leading-relaxed">netcad-distribuidora-elqui/
+├── index.html   # Esta aplicación web completa (autocontenida)
+└── README.md    # Descripción, uso de la herramienta y autor</pre>
+          <div class="text-xs font-bold text-slate-800 pt-1">Comandos Git para tu historial individual de commits:</div>
+          <pre class="bg-slate-900 text-slate-200 font-mono text-xs p-3.5 rounded-xl overflow-x-auto leading-relaxed">git init
+git add index.html README.md
+git commit -m "feat: despliega NetCAD completo con plano 64m, racks y presupuesto CLP"
+git branch -M main
+git remote add origin https://github.com/TU-USUARIO/netcad-distribuidora-elqui.git
+git push -u origin main</pre>
+        </div>
+
+        <!-- Guion Cronometrado 10 Minutos + Preguntas de Defensa (5 Minutos) -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
+          <h2 class="text-base font-extrabold text-slate-900">Criterio 2.9 — Guion Exposición (10 min) y Defensa Oral (5 min)</h2>
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+              <strong class="text-blue-700">Min 0:00 – 2:30 | Plano y Desafío 90 m:</strong> Abre tu URL de Cloudflare Pages, muestra la escala calibrada a <code>64,00 m</code> y activa el botón <em>"Simular Sin R2"</em> para demostrar que los enlaces de bodega/patio llegan a 118 m y cómo el <strong>Rack R2 (IDF 12U)</strong> los baja a ≤ 54 m.
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+              <strong class="text-indigo-700">Min 2:30 – 5:00 | Elevación Racks y TIA-606:</strong> Muestra R1 (32U, 40,6% libre) y R2 (12U, 50% libre), justificando la reserva ≥ 30% en U y puertos, y el etiquetado <code>OA-07A → R1-PP2-14 → R1-SW2-14</code>.
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+              <strong class="text-emerald-700">Min 5:00 – 7:30 | Cubicación y Presupuesto CLP:</strong> Explica las 10 cajas Cat 6 LSZH + 1 bobina PE exterior (con 3,0 m rack, 0,30 m salida y 10% merma) y el total con IVA (19%).
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+              <strong class="text-amber-700">Min 7:30 – 10:00 | Carta Gantt (10 días) y Riesgos:</strong> Explica el trabajo nocturno en oficinas, segregación por grúas horquilla a 6 m y certificación al 100%.
+            </div>
+          </div>
+
+          <div class="bg-blue-950 text-white rounded-xl p-3.5 text-xs space-y-1.5">
+            <div class="font-extrabold text-blue-300 uppercase">Preguntas Frecuentes en la Defensa (15% Individual):</div>
+            <p><strong>1. ¿Por qué pusiste un segundo rack R2?</strong> Porque ANSI/TIA-568.2-D limita el enlace permanente de cobre a 90 m; desde el MDF al patio de carga hay ~115 m.</p>
+            <p><strong>2. ¿Cómo calculaste la merma y holguras?</strong> Distancia física + 3,0 m en rack + 0,30 m en salida, y al subtotal se le aplica +10% de merma.</p>
+            <p><strong>3. ¿Por qué cable PE en el patio de carga?</strong> Porque el LSZH es para interiores libres de halógenos, mientras que el polietileno (PE) resiste radiación UV y humedad exterior.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Checklist Final de los 9 Criterios de la Rúbrica (400 Puntos) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+        <h3 class="text-sm font-extrabold text-slate-900 mb-3">Checklist de Autoevaluación — Rúbrica Oficial (400 Puntos Máx.)</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
+          <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950"><strong>✓ 2.1 Interpretación Plano (5%):</strong> Escala 64 m y simbología completa.</div>
+          <div class="p-2.2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950"><strong>✓ 2.2 Trazado y Norma (15%):</strong> Estrella R1+R2, 72 enlaces ≤ 90 m.</div>
+          <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950"><strong>✓ 2.3 Cubicación (15%):</strong> Cajas 305m, holguras 3m/0,3m y 10% merma.</div>
+          <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950"><strong>✓ 2.4 Presupuesto (10%):</strong> CLP real (Sinthesi/LK), MO e IVA 19%.</div>
+          <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950"><strong>✓ 2.5 Red Inalámbrica (10%):</strong> 6 APs (1 IP67) y PoE+ 802.3at.</div>
+          <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950"><strong>✓ 2.6 Gantt y Plan (10%):</strong> 10 días, cuadrilla 2T+1S y horarios.</div>
+          <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950"><strong>✓ 2.7 Riesgos y Seg. (5%):</strong> Matriz P×I, altura 6m y grúas.</div>
+          <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950"><strong>✓ 2.8 GitHub/Cloudflare (10%):</strong> Repo público, README y HTTPS.</div>
+          <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950"><strong>✓ 2.9 Exposición/Defensa (20%):</strong> 10 min claros + 5 min dominio total.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Pie de Página -->
+  <footer class="bg-white border-t border-slate-200 py-3 px-4 text-center text-xs text-slate-500 no-print">
+    NetCAD v3.0 · Proyecto Unidad 3: Infraestructura de Redes (TCB304) — INACAP Sede La Serena · Caso: Distribuidora Elqui SpA
+  </footer>
+
+  <!-- ======================================================================= -->
+  <!-- LÓGICA JAVASCRIPT INTEGRAL (DATOS REALES DEL CASO, SVG, RACKS, PRESUP.) -->
+  <!-- ======================================================================= -->
+  <script>
+    // -------------------------------------------------------------------------
+    // 1. ESTADO GLOBAL Y GENERACIÓN DE LOS 72 ENLACES DEL CASO (TIA-568 / 606)
+    // -------------------------------------------------------------------------
+    let topologyMode = 'resolved'; // 'resolved' (R1 + R2) | 'no-r2' (Simulación > 90m)
+    let activeRackId = 'R1';
+    let rulerActive = false;
+    let rulerPointA = null;
+
+    // Construcción estructurada de los 72 enlaces permanentes del proyecto
+    const ALL_LINKS = (() => {
+      const list = [];
+
+      // Helper para agregar salidas dobles (2 bocas: A y B)
+      const addDoubleOutlets = (prefix, room, count, startNum, startPPIdx, startSWIdx, ppRack, ppNum, swRack, swNum, baseLen, stepLen) => {
+        let ppIdx = startPPIdx;
+        let swIdx = startSWIdx;
+        for (let i = 0; i < count; i++) {
+          const numStr = String(startNum + i).padStart(2, '0');
+          const len = +(baseLen + i * stepLen).toFixed(1);
+          ['A', 'B'].forEach((boca) => {
+            list.push({
+              id: `${prefix}-${numStr}${boca}`,
+              room,
+              type: 'Salida Doble Cat 6',
+              service: 'Datos Gigabit (Puesto Trabajo)',
+              cable: 'U/UTP Cat 6 LSZH',
+              rack: 'R1',
+              pp: `${ppRack}-PP${ppNum}-${String(ppIdx++).padStart(2, '0')}`,
+              sw: `${swRack}-SW${swNum}-${String(swIdx++).padStart(2, '0')}`,
+              len,
+              lenNoR2: len
+            });
+          });
+        }
+      };
+
+      // 1) Oficina Abierta: 16 salidas dobles (OA-01A..OA-16B = 32 bocas) + 1 simple impresora (OA-17A)
+      addDoubleOutlets('OA', 'Oficina Abierta', 12, 1, 1, 1, 'R1', 1, 'R1', 1, 24.5, 1.3);
+      addDoubleOutlets('OA', 'Oficina Abierta', 4, 13, 1, 1, 'R1', 2, 'R1', 2, 40.2, 1.1);
+      list.push({
+        id: 'OA-17A',
+        room: 'Oficina Abierta',
+        type: 'Salida Simple Cat 6',
+        service: 'Datos Gigabit (Impresora Red)',
+        cable: 'U/UTP Cat 6 LSZH',
+        rack: 'R1',
+        pp: 'R1-PP2-09',
+        sw: 'R1-SW2-09',
+        len: 33.4,
+        lenNoR2: 33.4
+      });
+
+      // 2) Contabilidad: 4 salidas dobles (CON-01A..CON-04B = 8 bocas) + 1 simple impresora (CON-05A)
+      addDoubleOutlets('CON', 'Contabilidad', 4, 1, 10, 10, 'R1', 2, 'R1', 2, 36.0, 1.6);
+      list.push({
+        id: 'CON-05A',
+        room: 'Contabilidad',
+        type: 'Salida Simple Cat 6',
+        service: 'Datos Gigabit (Impresora Contab.)',
+        cable: 'U/UTP Cat 6 LSZH',
+        rack: 'R1',
+        pp: 'R1-PP2-18',
+        sw: 'R1-SW2-18',
+        len: 43.2,
+        lenNoR2: 43.2
+      });
+
+      // 3) RR.HH.: 3 salidas dobles (RH-01A..RH-03B = 6 bocas)
+      addDoubleOutlets('RH', 'RR.HH.', 3, 1, 19, 19, 'R1', 2, 'R1', 2, 42.5, 1.8);
+
+      // 4) Recepción: 1 salida doble (REC-01A/B) + 1 simple impresora multifuncional (REC-02A)
+      addDoubleOutlets('REC', 'Recepción', 1, 1, 1, 1, 'R1', 3, 'R1', 3, 18.4, 0);
+      list.push({
+        id: 'REC-02A',
+        room: 'Recepción',
+        type: 'Salida Simple Cat 6',
+        service: 'Datos Gigabit (Impresora Multif.)',
+        cable: 'U/UTP Cat 6 LSZH',
+        rack: 'R1',
+        pp: 'R1-PP3-03',
+        sw: 'R1-SW3-03',
+        len: 20.6,
+        lenNoR2: 20.6
+      });
+
+      // 5) Sala de Reuniones: 1 salida doble (SR-01A/B) + 1 simple pantalla (SR-02A)
+      addDoubleOutlets('SR', 'Sala de Reuniones', 1, 1, 4, 4, 'R1', 3, 'R1', 3, 27.8, 0);
+      list.push({
+        id: 'SR-02A',
+        room: 'Sala de Reuniones',
+        type: 'Salida Simple Cat 6',
+        service: 'Datos Gigabit (Pantalla Sala)',
+        cable: 'U/UTP Cat 6 LSZH',
+        rack: 'R1',
+        pp: 'R1-PP3-06',
+        sw: 'R1-SW3-06',
+        len: 29.5,
+        lenNoR2: 29.5
+      });
+
+      // 6) Gerencia: 2 salidas dobles (GER-01A..GER-02B = 4 bocas)
+      addDoubleOutlets('GER', 'Gerencia', 2, 1, 7, 7, 'R1', 3, 'R1', 3, 35.2, 2.4);
+
+      // 7) Oficina Bodega: 2 salidas dobles (OB-01A..OB-02B = 4 bocas)
+      addDoubleOutlets('OB', 'Oficina Bodega', 2, 1, 1, 11, 'R1', 4, 'R1', 3, 46.8, 2.2);
+
+      // 8) Access Points Oficinas PoE+ (3 unid. conectados a R1-PP4 / R1-SW4)
+      list.push(
+        { id: 'OA-AP01', room: 'Oficina Abierta', type: 'Access Point Wi-Fi 6', service: 'PoE+ 802.3at (Wi-Fi Interior)', cable: 'U/UTP Cat 6 LSZH', rack: 'R1', pp: 'R1-PP4-05', sw: 'R1-SW4-05', len: 26.4, lenNoR2: 26.4 },
+        { id: 'OA-AP02', room: 'Oficina Abierta', type: 'Access Point Wi-Fi 6', service: 'PoE+ 802.3at (Wi-Fi Interior)', cable: 'U/UTP Cat 6 LSZH', rack: 'R1', pp: 'R1-PP4-06', sw: 'R1-SW4-06', len: 38.2, lenNoR2: 38.2 },
+        { id: 'SR-AP01', room: 'Sala de Reuniones', type: 'Access Point Wi-Fi 6', service: 'PoE+ 802.3at (Wi-Fi Interior)', cable: 'U/UTP Cat 6 LSZH', rack: 'R1', pp: 'R1-PP4-07', sw: 'R1-SW4-07', len: 28.0, lenNoR2: 28.0 }
+      );
+
+      // 9) Bodega 6,0 m (2 APs + 2 Cámaras IP) -> Conectados a R2 IDF (≤ 39,5 m) vs Sin R2 (> 90 m)
+      list.push(
+        { id: 'BOD-AP01', room: 'Bodega', type: 'Access Point Wi-Fi 6 (6m)', service: 'PoE+ 802.3at (Pasillos 1-2)', cable: 'U/UTP Cat 6 LSZH', rack: 'R2', pp: 'R2-PP1-01', sw: 'R2-SW1-01', len: 24.5, lenNoR2: 96.5 },
+        { id: 'BOD-AP02', room: 'Bodega', type: 'Access Point Wi-Fi 6 (6m)', service: 'PoE+ 802.3at (Pasillos 3-4)', cable: 'U/UTP Cat 6 LSZH', rack: 'R2', pp: 'R2-PP1-02', sw: 'R2-SW1-02', len: 36.5, lenNoR2: 108.5 },
+        { id: 'BOD-CAM01', room: 'Bodega', type: 'Cámara IP 4MP (6m)', service: 'PoE+ 802.3at (CCTV Interior)', cable: 'U/UTP Cat 6 LSZH', rack: 'R2', pp: 'R2-PP1-03', sw: 'R2-SW1-03', len: 26.0, lenNoR2: 98.0 },
+        { id: 'BOD-CAM02', room: 'Bodega', type: 'Cámara IP 4MP (6m)', service: 'PoE+ 802.3at (CCTV Interior)', cable: 'U/UTP Cat 6 LSZH', rack: 'R2', pp: 'R2-PP1-04', sw: 'R2-SW1-04', len: 39.5, lenNoR2: 111.5 }
+      );
+
+      // 10) Patio de Carga Exterior (1 AP IP67 + 2 Cámaras IP67 Andenes) -> Cable Exterior PE + R2 IDF
+      list.push(
+        { id: 'PAT-AP01', room: 'Patio de Carga', type: 'Access Point Exterior IP67', service: 'PoE+ 802.3at (Wi-Fi Exterior)', cable: 'U/UTP Cat 6 Exterior PE', rack: 'R2', pp: 'R2-PP1-05', sw: 'R2-SW1-05', len: 46.0, lenNoR2: 114.0 },
+        { id: 'PAT-CAM01', room: 'Patio de Carga', type: 'Cámara IP Exterior IP67', service: 'PoE+ 802.3at (Vigilancia Andén 2)', cable: 'U/UTP Cat 6 Exterior PE', rack: 'R2', pp: 'R2-PP1-06', sw: 'R2-SW1-06', len: 52.4, lenNoR2: 116.4 },
+        { id: 'PAT-CAM02', room: 'Patio de Carga', type: 'Cámara IP Exterior IP67', service: 'PoE+ 802.3at (Vigilancia Andén 1)', cable: 'U/UTP Cat 6 Exterior PE', rack: 'R2', pp: 'R2-PP1-07', sw: 'R2-SW1-07', len: 54.2, lenNoR2: 118.2 }
+      );
+
+      return list;
+    })();
+
+    // Nodos visuales representativos en el plano arquitectónico SVG
+    const PLAN_NODES = [
+      // Racks
+      { id: 'R1-MDF', kind: 'rack', x: 25, y: 270, label: 'R1 MDF', title: 'R1 — Rack Principal de Piso (32U)', room: 'Sala de Telecomunicaciones (5,0 × 6,0 m)', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP1 a R1-PP4', sw: 'R1-SW1 a R1-SW4', len: 0, lenNoR2: 0, desc: 'Gabinete principal 32U en sala dedicada con acceso directo a bandeja sobre cielo falso (2,70 m). Concentra los 65 enlaces de oficinas y 2 troncales hacia R2.' },
+      { id: 'R2-IDF', kind: 'rack', x: 286, y: 158, label: 'R2 IDF', title: 'R2 — Rack Secundario Mural (12U)', room: 'Bodega (Muro Oeste a 3,0 m altura)', cable: 'Trunk Cat 6 LSZH (38,0 m)', pp: 'R2-PP1 (24p)', sw: 'R2-SW1 PoE+ (24p)', len: 38.0, lenNoR2: 0, desc: 'Solución normativa ANSI/TIA-568.2-D: acorta todos los enlaces de Bodega y Patio de Carga por debajo de 54,2 m, evitando exceder el límite de 90 m.' },
+
+      // Oficina Abierta (16 puestos dobles + 1 simple + 2 APs)
+      { id: 'OA-01..04', kind: 'double', x: 28, y: 35, trayX: 80, label: 'OA-01..04', title: 'Oficina Abierta — Puestos 01 al 04 (8 bocas)', room: 'Oficina Abierta', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP1-01 a 08', sw: 'R1-SW1-01 a 08', len: 26.5, lenNoR2: 26.5, desc: '4 salidas dobles Cat 6 en canaleta PVC perimetral a 0,40 m del piso con bajada desde bandeja de cielo falso (2,70 m).' },
+      { id: 'OA-05..08', kind: 'double', x: 28, y: 105, trayX: 80, label: 'OA-05..08', title: 'Oficina Abierta — Puestos 05 al 08 (8 bocas)', room: 'Oficina Abierta', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP1-09 a 16', sw: 'R1-SW1-09 a 16', len: 31.2, lenNoR2: 31.2, desc: '4 salidas dobles Cat 6 para islas centrales de trabajo en Oficina Abierta.' },
+      { id: 'OA-09..12', kind: 'double', x: 132, y: 35, trayX: 80, label: 'OA-09..12', title: 'Oficina Abierta — Puestos 09 al 12 (8 bocas)', room: 'Oficina Abierta', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP1-17 a 24', sw: 'R1-SW1-17 a 24', len: 36.8, lenNoR2: 36.8, desc: '4 salidas dobles Cat 6 sector noreste de Oficina Abierta.' },
+      { id: 'OA-13..16', kind: 'double', x: 132, y: 105, trayX: 80, label: 'OA-13..16', title: 'Oficina Abierta — Puestos 13 al 16 (8 bocas)', room: 'Oficina Abierta', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP2-01 a 08', sw: 'R1-SW2-01 a 08', len: 42.1, lenNoR2: 42.1, desc: '4 salidas dobles Cat 6 sector sureste de Oficina Abierta.' },
+      { id: 'OA-17A', kind: 'single', x: 148, y: 136, trayX: 80, label: 'OA-17A', title: 'OA-17A — Salida Simple Impresora Red', room: 'Oficina Abierta', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP2-09', sw: 'R1-SW2-09', len: 33.4, lenNoR2: 33.4, desc: 'Salida simple RJ45 Cat 6 dedicada para impresora departamental compartida.' },
+      { id: 'OA-AP01', kind: 'ap', x: 55, y: 70, trayX: 80, label: 'OA-AP01', title: 'OA-AP01 — Access Point Wi-Fi 6 PoE+', room: 'Oficina Abierta (Cielo Falso 2,70 m)', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP4-05', sw: 'R1-SW4-05', len: 26.4, lenNoR2: 26.4, desc: 'Access Point empresarial PoE+ 802.3at montado en cielo falso sector oeste de Oficina Abierta.' },
+      { id: 'OA-AP02', kind: 'ap', x: 185, y: 70, trayX: 190, label: 'OA-AP02', title: 'OA-AP02 — Access Point Wi-Fi 6 PoE+', room: 'Oficina Abierta / Contabilidad (2,70 m)', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP4-06', sw: 'R1-SW4-06', len: 38.2, lenNoR2: 38.2, desc: 'Segundo Access Point PoE+ para roaming continuo entre Oficina Abierta, Contabilidad y RR.HH.' },
+
+      // Contabilidad y RR.HH.
+      { id: 'CON-01..05', kind: 'double', x: 190, y: 35, trayX: 190, label: 'CON-01..05', title: 'Contabilidad — 4 Dobles + 1 Simple (9 bocas)', room: 'Contabilidad', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP2-10 a 18', sw: 'R1-SW2-10 a 18', len: 39.6, lenNoR2: 39.6, desc: '4 puestos de trabajo dobles (CON-01A..04B) y 1 salida simple para impresora fiscal (CON-05A).' },
+      { id: 'RH-01..03', kind: 'double', x: 250, y: 45, trayX: 250, label: 'RH-01..03', title: 'RR.HH. — 3 Salidas Dobles (6 bocas)', room: 'Recursos Humanos', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP2-19 a 24', sw: 'R1-SW2-19 a 24', len: 44.3, lenNoR2: 44.3, desc: '3 salidas dobles Cat 6 (RH-01A..RH-03B) alimentadas desde ramal norte sobre cielo falso.' },
+
+      // Zona Sur Oficinas (Recepción, Sala Reuniones, Gerencia, Oficina Bodega)
+      { id: 'REC-01..02', kind: 'double', x: 90, y: 270, trayX: 90, label: 'REC-01..02', title: 'Recepción — 1 Doble + 1 Simple (3 bocas)', room: 'Recepción', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP3-01 a 03', sw: 'R1-SW3-01 a 03', len: 19.5, lenNoR2: 19.5, desc: 'Salida doble en mesón de atención (REC-01A/B) y salida simple para impresora multifuncional (REC-02A).' },
+      { id: 'SR-01..02', kind: 'double', x: 170, y: 275, trayX: 170, label: 'SR-01..02', title: 'Sala Reuniones — 1 Doble + 1 Simple Pantalla', room: 'Sala de Reuniones', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP3-04 a 06', sw: 'R1-SW3-04 a 06', len: 28.6, lenNoR2: 28.6, desc: 'Salida doble en mesa de conferencias (SR-01A/B) y salida simple en muro para pantalla interactiva (SR-02A).' },
+      { id: 'SR-AP01', kind: 'ap', x: 170, y: 215, trayX: 170, label: 'SR-AP01', title: 'SR-AP01 — Access Point Sala Reuniones', room: 'Sala de Reuniones (2,70 m)', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP4-07', sw: 'R1-SW4-07', len: 28.0, lenNoR2: 28.0, desc: 'Access Point PoE+ 802.3at de alta densidad para videoconferencias y cobertura en zona sur.' },
+      { id: 'GER-01..02', kind: 'double', x: 245, y: 270, trayX: 245, label: 'GER-01..02', title: 'Gerencia — 2 Salidas Dobles (4 bocas)', room: 'Gerencia', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP3-07 a 10', sw: 'R1-SW3-07 a 10', len: 36.4, lenNoR2: 36.4, desc: '2 salidas dobles Cat 6 (GER-01A..GER-02B) canalizadas por cielo falso y canaleta PVC.' },
+      { id: 'OB-01..02', kind: 'double', x: 310, y: 275, trayX: 310, label: 'OB-01..02', title: 'Oficina Bodega — 2 Salidas Dobles (4 bocas)', room: 'Oficina Bodega', cable: 'U/UTP Cat 6 LSZH', pp: 'R1-PP4-01 a 04', sw: 'R1-SW3-11 a 14', len: 47.9, lenNoR2: 47.9, desc: '2 salidas dobles Cat 6 (OB-01A..OB-02B) enlazadas directamente al MDF R1 (longitud < 50 m).' },
+
+      // Bodega 6,0 m (2 APs + 2 Cámaras IP)
+      { id: 'BOD-AP01', kind: 'ap', x: 410, y: 120, trayX: 410, label: 'BOD-AP01', title: 'BOD-AP01 — Access Point Bodega (Altura 6,0 m)', room: 'Bodega (Pasillos Estanterías 1-2)', cable: 'U/UTP Cat 6 LSZH', pp: 'R2-PP1-01', sw: 'R2-SW1-01', len: 24.5, lenNoR2: 96.5, desc: 'Montado a 6,00 m sobre bandeja portacables entre estanterías para evitar sombra RF de racks metálicos.' },
+      { id: 'BOD-AP02', kind: 'ap', x: 530, y: 120, trayX: 530, label: 'BOD-AP02', title: 'BOD-AP02 — Access Point Bodega (Altura 6,0 m)', room: 'Bodega (Pasillos Estanterías 3-4)', cable: 'U/UTP Cat 6 LSZH', pp: 'R2-PP1-02', sw: 'R2-SW1-02', len: 36.5, lenNoR2: 108.5, desc: 'Segundo AP industrial a 6,00 m asegurando cobertura para terminales móviles de radiofrecuencia y picking.' },
+      { id: 'BOD-CAM01', kind: 'cam', x: 355, y: 25, trayX: 410, label: 'BOD-CAM01', title: 'BOD-CAM01 — Cámara IP 4MP Bodega Norte', room: 'Bodega (Montaje 6,0 m + EMT)', cable: 'U/UTP Cat 6 LSZH', pp: 'R2-PP1-03', sw: 'R2-SW1-03', len: 26.0, lenNoR2: 98.0, desc: 'Cámara IP PoE+ 802.3at con bajada en tubo conduit EMT galvanizado cubriendo pasillos de almacenamiento.' },
+      { id: 'BOD-CAM02', kind: 'cam', x: 585, y: 235, trayX: 585, label: 'BOD-CAM02', title: 'BOD-CAM02 — Cámara IP 4MP Bodega Sur/Andenes', room: 'Bodega (Montaje 6,0 m + EMT)', cable: 'U/UTP Cat 6 LSZH', pp: 'R2-PP1-04', sw: 'R2-SW1-04', len: 39.5, lenNoR2: 111.5, desc: 'Cámara IP PoE+ 802.3at supervisando zona de despacho interno y acceso a Andén 1 y Andén 2.' },
+
+      // Patio de Carga Exterior (Cable Cat 6 Cubierta PE + IP67)
+      { id: 'PAT-AP01', kind: 'ap', x: 650, y: 145, trayX: 635, label: 'PAT-AP01 (IP67)', title: 'PAT-AP01 — Access Point Exterior IP67', room: 'Patio de Carga Exterior', cable: 'U/UTP Cat 6 Exterior PE', pp: 'R2-PP1-05', sw: 'R2-SW1-05', len: 46.0, lenNoR2: 114.0, desc: 'AP exterior IP67 alimentado por PoE+ con cable U/UTP Cat 6 cubierta PE resistente a radiación UV y humedad.' },
+      { id: 'PAT-CAM01', kind: 'cam', x: 642, y: 65, trayX: 635, label: 'PAT-CAM01', title: 'PAT-CAM01 — Cámara Exterior IP67 Andén 2', room: 'Patio de Carga (Andén 2)', cable: 'U/UTP Cat 6 Exterior PE', pp: 'R2-PP1-06', sw: 'R2-SW1-06', len: 52.4, lenNoR2: 116.4, desc: 'Cámara bullet exterior IP67 con cable Cat 6 PE y caja estanca IP65 apuntando a maniobras de carga en Andén 2.' },
+      { id: 'PAT-CAM02', kind: 'cam', x: 642, y: 225, trayX: 635, label: 'PAT-CAM02', title: 'PAT-CAM02 — Cámara Exterior IP67 Andén 1', room: 'Patio de Carga (Andén 1)', cable: 'U/UTP Cat 6 Exterior PE', pp: 'R2-PP1-07', sw: 'R2-SW1-07', len: 54.2, lenNoR2: 118.2, desc: 'Enlace más largo del proyecto (54,2 m desde R2 IDF). Cumple holgadamente el límite ≤ 90 m de ANSI/TIA-568.2-D.' }
+    ];
+
+    // -------------------------------------------------------------------------
+    // 2. RENDERIZADO DEL PLANO INTERACTIVO, MODO 90m, REGLA Y TABLA DE ENLACES
+    // -------------------------------------------------------------------------
+    function renderFloorPlan() {
+      const routesLayer = document.getElementById('layer-routes');
+      const nodesLayer = document.getElementById('layer-nodes');
+      if (!routesLayer || !nodesLayer) return;
+
+      routesLayer.innerHTML = '';
+      nodesLayer.innerHTML = '';
+
+      // 1) Dibujar enlace troncal R1 <-> R2 cuando el modo es 'resolved'
+      if (topologyMode === 'resolved') {
+        routesLayer.innerHTML += `
+          <polyline
+            points="25,270 25,158 286,158"
+            fill="none"
+            stroke="#7c3aed"
+            stroke-width="2.6"
+            stroke-dasharray="5 3"
+          />
+        `;
+      }
+
+      // 2) Dibujar rutas ortogonales siguiendo las bandejas portacables
+      PLAN_NODES.forEach((node) => {
+        if (node.kind === 'rack') return;
+
+        const isRemoteBodega = node.x > 330;
+        const targetRackKey = (topologyMode === 'resolved' && isRemoteBodega) ? 'R2' : 'R1';
+        const effectiveLen = topologyMode === 'resolved' ? node.len : node.lenNoR2;
+        const isViolation = effectiveLen > 90;
+
+        let pts = '';
+        if (targetRackKey === 'R1') {
+          pts = `25,270 25,158 ${node.trayX},158 ${node.trayX},${node.y} ${node.x},${node.y}`;
+        } else {
+          pts = `286,158 ${node.trayX},158 ${node.trayX},${node.y} ${node.x},${node.y}`;
+        }
+
+        const strokeColor = isViolation ? '#e11d48' : (node.cable.includes('Exterior') ? '#0d9488' : '#10b981');
+        const extraClass = isViolation ? 'route-violation' : '';
+        const dashAttr = isViolation ? 'stroke-dasharray="6 4"' : '';
+
+        routesLayer.innerHTML += `
+          <polyline
+            points="${pts}"
+            fill="none"
+            stroke="${strokeColor}"
+            stroke-width="${isViolation ? '2.2' : '1.5'}"
+            stroke-opacity="0.88"
+            ${dashAttr}
+            class="${extraClass}"
+          />
+        `;
+      });
+
+      // 3) Dibujar nodos clicables (Racks, Salidas, APs y Cámaras)
+      PLAN_NODES.forEach((node) => {
+        if (node.id === 'R2-IDF' && topologyMode !== 'resolved') return;
+
+        const effectiveLen = topologyMode === 'resolved' ? node.len : node.lenNoR2;
+        const isViolation = effectiveLen > 90;
+        let shapeSvg = '';
+
+        if (node.kind === 'rack') {
+          shapeSvg = `
+            <rect x="${node.x - 11}" y="${node.y - 11}" width="22" height="22" rx="4" fill="#dc2626" stroke="#ffffff" stroke-width="2" />
+            <text x="${node.x}" y="${node.y + 3}" font-size="7" font-weight="800" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#ffffff">
+              ${node.id.slice(0, 2)}
+            </text>
+            <text x="${node.x}" y="${node.y - 14}" font-size="7.5" font-weight="800" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#991b1b">
+              ${node.label}
+            </text>
+          `;
+        } else if (node.kind === 'double' || node.kind === 'single') {
+          const fill = node.kind === 'double' ? '#2563eb' : '#0ea5e9';
+          shapeSvg = `
+            <circle cx="${node.x}" cy="${node.y}" r="5.5" fill="${fill}" stroke="#ffffff" stroke-width="1.5" />
+            <text x="${node.x}" y="${node.y - 8}" font-size="6.8" font-weight="700" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#1e293b">
+              ${node.label}
+            </text>
+          `;
+        } else if (node.kind === 'ap') {
+          const fill = isViolation ? '#e11d48' : '#4f46e5';
+          shapeSvg = `
+            <circle cx="${node.x}" cy="${node.y}" r="6.8" fill="${fill}" stroke="#ffffff" stroke-width="1.6" />
+            <text x="${node.x}" y="${node.y + 2.5}" font-size="6.5" font-weight="800" text-anchor="middle" fill="#ffffff">Wi</text>
+            <text x="${node.x}" y="${node.y - 9.5}" font-size="7" font-weight="800" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="${isViolation ? '#be123c' : '#312e81'}">
+              ${node.label}${isViolation ? ' (' + effectiveLen + 'm!)' : ''}
+            </text>
+          `;
+        } else if (node.kind === 'cam') {
+          const fill = isViolation ? '#e11d48' : '#d97706';
+          shapeSvg = `
+            <circle cx="${node.x}" cy="${node.y}" r="6.5" fill="${fill}" stroke="#ffffff" stroke-width="1.6" />
+            <text x="${node.x}" y="${node.y + 2.5}" font-size="6" font-weight="800" text-anchor="middle" fill="#ffffff">IP</text>
+            <text x="${node.x}" y="${node.y - 9}" font-size="6.8" font-weight="800" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="${isViolation ? '#be123c' : '#92400e'}">
+              ${node.label}${isViolation ? ' (' + effectiveLen + 'm!)' : ''}
+            </text>
+          `;
+        }
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'cursor-pointer');
+        g.innerHTML = shapeSvg;
+        g.addEventListener('click', (e) => {
+          if (rulerActive) return;
+          e.stopPropagation();
+          inspectPlanNode(node);
+        });
+        nodesLayer.appendChild(g);
+      });
+    }
+
+    function inspectPlanNode(node) {
+      const effectiveLen = topologyMode === 'resolved' ? node.len : node.lenNoR2;
+      const isViolation = effectiveLen > 90;
+
+      const badge = document.getElementById('inspBadge');
+      if (node.kind === 'rack') {
+        badge.textContent = 'NODO RACK';
+        badge.className = 'text-[11px] font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold';
+      } else if (isViolation) {
+        badge.textContent = `${effectiveLen.toFixed(1)} m > 90 m`;
+        badge.className = 'text-[11px] font-mono bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-bold';
+      } else {
+        badge.textContent = '≤ 90 m OK';
+        badge.className = 'text-[11px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold';
+      }
+
+      document.getElementById('inspTitle').textContent = node.title;
+      document.getElementById('inspRoom').textContent = node.room;
+      document.getElementById('inspLabel').textContent = node.id;
+      document.getElementById('inspCable').textContent = node.cable;
+      document.getElementById('inspLength').textContent = effectiveLen > 0 ? `${effectiveLen.toFixed(1)} m` : 'Nodo Central MDF';
+      document.getElementById('inspLength').className = isViolation ? 'text-rose-600' : 'text-blue-700';
+      document.getElementById('inspPP').textContent = (topologyMode === 'no-r2' && node.pp.startsWith('R2')) ? 'Sin puerto (Excede 90m)' : node.pp;
+      document.getElementById('inspSW').textContent = (topologyMode === 'no-r2' && node.sw.startsWith('R2')) ? 'Requiere R2 IDF' : node.sw;
+      document.getElementById('inspDesc').textContent = node.desc;
+    }
+
+    function setTopologyMode(mode) {
+      topologyMode = mode;
+      const btnRes = document.getElementById('btnModeResolved');
+      const btnNoR2 = document.getElementById('btnModeNoR2');
+      const kpiMax = document.getElementById('kpiMaxLink');
+      const kpiSub = document.getElementById('kpiMaxLinkSub');
+      const kpiArch = document.getElementById('kpiArchMode');
+      const headerLinks = document.getElementById('headerKpiLinks');
+
+      if (mode === 'resolved') {
+        btnRes.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow-sm cursor-pointer transition';
+        btnNoR2.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-rose-50 hover:text-rose-700 border border-slate-300 cursor-pointer transition';
+        kpiMax.textContent = '54,2 m';
+        kpiMax.className = 'text-lg font-extrabold text-emerald-600 font-mono mt-0.5';
+        kpiSub.textContent = 'Cumple ≤ 90 m (TIA-568)';
+        kpiSub.className = 'text-[11px] text-emerald-700 font-medium';
+        kpiArch.textContent = 'R1 MDF + R2 IDF';
+        headerLinks.textContent = '72 Enlaces ≤ 90m';
+        headerLinks.className = 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 px-2.5 py-1.5 rounded-lg';
+      } else {
+        btnNoR2.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white shadow-sm cursor-pointer transition';
+        btnRes.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-300 cursor-pointer transition';
+        kpiMax.textContent = '118,2 m';
+        kpiMax.className = 'text-lg font-extrabold text-rose-600 font-mono mt-0.5';
+        kpiSub.textContent = '⚠ 7 enlaces > 90 m (Fuera norma)';
+        kpiSub.className = 'text-[11px] text-rose-700 font-bold';
+        kpiArch.textContent = 'Solo R1 MDF (Falla)';
+        headerLinks.textContent = '65 OK / 7 > 90m';
+        headerLinks.className = 'bg-rose-950/80 text-rose-300 border border-rose-700/60 px-2.5 py-1.5 rounded-lg';
+      }
+
+      renderFloorPlan();
+      renderLinksTable();
+    }
+
+    function toggleLayer(layerId, visible) {
+      const el = document.getElementById(layerId);
+      if (el) el.style.display = visible ? 'inline' : 'none';
+    }
+
+    function toggleRuler() {
+      rulerActive = !rulerActive;
+      rulerPointA = null;
+      const btn = document.getElementById('btnRulerToggle');
+      const readout = document.getElementById('rulerReadout');
+      const rulerLayer = document.getElementById('layer-ruler');
+
+      if (rulerActive) {
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-sm flex items-center gap-1.5 cursor-pointer transition';
+        readout.classList.remove('hidden');
+        readout.textContent = 'Haz clic en el punto inicial (A) del plano...';
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-blue-50 text-slate-800 border border-slate-300 flex items-center gap-1.5 cursor-pointer transition';
+        readout.classList.add('hidden');
+        if (rulerLayer) rulerLayer.innerHTML = '';
+      }
+    }
+
+    document.getElementById('floorPlanSvg').addEventListener('click', (evt) => {
+      if (!rulerActive) return;
+      const svg = document.getElementById('floorPlanSvg');
+      const pt = svg.createSVGPoint();
+      pt.x = evt.clientX;
+      pt.y = evt.clientY;
+      const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const rulerLayer = document.getElementById('layer-ruler');
+      const readout = document.getElementById('rulerReadout');
+
+      if (!rulerPointA) {
+        rulerPointA = { x: svgPt.x, y: svgPt.y };
+        rulerLayer.innerHTML = `<circle cx="${svgPt.x.toFixed(1)}" cy="${svgPt.y.toFixed(1)}" r="4.5" fill="#2563eb" stroke="#ffffff" stroke-width="1.5" />`;
+        readout.textContent = `Punto A (${(svgPt.x / 10).toFixed(1)}m, ${(svgPt.y / 10).toFixed(1)}m) → Haz clic en el punto final (B)...`;
+      } else {
+        const dxMeters = Math.abs(svgPt.x - rulerPointA.x) / 10;
+        const dyMeters = Math.abs(svgPt.y - rulerPointA.y) / 10;
+        const straightDist = Math.hypot(dxMeters, dyMeters);
+        const orthoDist = dxMeters + dyMeters;
+
+        rulerLayer.innerHTML = `
+          <line x1="${rulerPointA.x.toFixed(1)}" y1="${rulerPointA.y.toFixed(1)}" x2="${svgPt.x.toFixed(1)}" y2="${svgPt.y.toFixed(1)}" stroke="#2563eb" stroke-width="2" stroke-dasharray="4 2" />
+          <circle cx="${rulerPointA.x.toFixed(1)}" cy="${rulerPointA.y.toFixed(1)}" r="4.5" fill="#2563eb" stroke="#ffffff" stroke-width="1.5" />
+          <circle cx="${svgPt.x.toFixed(1)}" cy="${svgPt.y.toFixed(1)}" r="4.5" fill="#dc2626" stroke="#ffffff" stroke-width="1.5" />
+        `;
+        readout.textContent = `Directa: ${straightDist.toFixed(2)} m · Ortogonal bandeja: ${orthoDist.toFixed(2)} m (Clic para nueva medición)`;
+        rulerPointA = null;
+      }
+    });
+
+    function renderLinksTable() {
+      const tbody = document.getElementById('linksTableBody');
+      if (!tbody) return;
+      const recintoFilter = document.getElementById('filterRecinto').value;
+      const query = document.getElementById('searchLinkInput').value.trim().toUpperCase();
+
+      tbody.innerHTML = '';
+      ALL_LINKS.forEach((link) => {
+        if (recintoFilter !== 'ALL' && link.room !== recintoFilter) return;
+        if (query && !link.id.toUpperCase().includes(query) && !link.room.toUpperCase().includes(query) && !link.pp.toUpperCase().includes(query)) return;
+
+        const effLen = topologyMode === 'resolved' ? link.len : link.lenNoR2;
+        const isViolation = effLen > 90;
+        const destRack = (topologyMode === 'no-r2' && link.rack === 'R2') ? 'R1 (Forzado)' : (link.rack === 'R1' ? 'R1 MDF' : 'R2 IDF');
+
+        const tr = document.createElement('tr');
+        tr.className = isViolation ? 'bg-rose-50/70 hover:bg-rose-100/70' : 'hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="py-1.5 px-3 font-bold text-blue-700">${link.id}</td>
+          <td class="py-1.5 px-3 font-sans text-slate-800">${link.room}</td>
+          <td class="py-1.5 px-3 font-sans text-slate-600">${link.type}</td>
+          <td class="py-1.5 px-3 text-slate-600">${link.cable}</td>
+          <td class="py-1.5 px-3 font-bold ${link.rack === 'R2' ? 'text-purple-700' : 'text-slate-800'}">${destRack}</td>
+          <td class="py-1.5 px-3 text-slate-700">${link.pp} / ${link.sw}</td>
+          <td class="py-1.5 px-3 text-right font-bold ${isViolation ? 'text-rose-600' : 'text-slate-900'}">${effLen.toFixed(1)} m</td>
+          <td class="py-1.5 px-3 text-center">
+            ${isViolation
+              ? '<span class="px-2 py-0.5 rounded bg-rose-600 text-white text-[10px] font-bold">EXCEDE 90m</span>'
+              : '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">CUMPLE ≤ 90m</span>'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 3. MÓDULO INTERACTIVO DE DISEÑO DE RACKS (IMAGEN VECTORIAL + INSPECTOR)
+    // -------------------------------------------------------------------------
+    let rackViewMode = 'R1'; // 'R1' | 'R2' | 'BOTH'
+    let rackGlassClosed = false;
+    let selectedRackItemIdx = 3; // Por defecto selecciona R1-PP1
+    let selectedPortNumber = 1;  // Puerto 1..24 seleccionado en el inspector
+
+    const RACKS_DATA = {
+      R1: {
+        id: 'R1',
+        name: 'R1 — Gabinete Rack de Piso 32U (Sala Telecom. MDF)',
+        shortName: 'R1 MDF (32U Piso)',
+        subtitle: '19" Estándar EIA-310 · 600×800 mm · Reserva mínima requerida ≥ 30%',
+        totalU: 32,
+        upsCapacityVA: 2000,
+        items: [
+          { startU: 32, sizeU: 1, kind: 'tray', unitCode: 'R1-BND1', label: 'Bandeja Fija 1U + ONT ISP Fibra', sub: 'Enlace WAN Proveedor Internet', watts: 18, desc: 'Bandeja fija ventilada 1U que aloja el terminal óptico (ONT) del proveedor ISP con latiguillo de fibra hacia el Router.' },
+          { startU: 31, sizeU: 1, kind: 'router', unitCode: 'R1-RTR1', label: 'Router / Firewall Gigabit Dual-WAN', sub: 'Gateway Seguridad y VLANs', watts: 28, desc: 'Router/Firewall empresarial 19" 1U encargado del enrutamiento inter-VLAN (Datos, Wi-Fi Corporativo, Invitados y CCTV) y salida a Internet.' },
+          { startU: 30, sizeU: 1, kind: 'org', unitCode: 'R1-ORG1', label: 'Organizador Horizontal Ranurado 1U', sub: 'Gestión Patch Cords Superiores', watts: 0, desc: 'Guía horizontal ranurada 1U con tapa frontal para mantener radios de curvatura ≥ 4× diámetro del cable Cat 6.' },
+          { startU: 29, sizeU: 1, kind: 'pp', unitCode: 'R1-PP1', label: 'Patch Panel 1 — 24p Cat 6 (OA 01-12)', sub: 'Oficina Abierta Puestos 1 al 12', watts: 0, desc: 'Patch Panel modular 1U 24 puertos RJ45 Cat 6 (T568B). Termina 24 enlaces permanentes de Oficina Abierta (OA-01A a OA-12B).' },
+          { startU: 28, sizeU: 1, kind: 'org', unitCode: 'R1-ORG2', label: 'Organizador Horizontal Ranurado 1U', sub: 'Gestión Patch Cords PP1 / PP2', watts: 0, desc: 'Organizador horizontal 1U entre R1-PP1 y R1-PP2 para ordenamiento limpio de patch cords de 0,5 m.' },
+          { startU: 27, sizeU: 1, kind: 'pp', unitCode: 'R1-PP2', label: 'Patch Panel 2 — 24p Cat 6 (OA, CON, RH)', sub: 'Of. Abierta (9), Contab. (9), RR.HH. (6)', watts: 0, desc: 'Patch Panel 1U 24 puertos Cat 6. Concentra puestos restantes de Oficina Abierta, Impresora OA-17A, Contabilidad y RR.HH.' },
+          { startU: 26, sizeU: 1, kind: 'org', unitCode: 'R1-ORG3', label: 'Organizador Horizontal Ranurado 1U', sub: 'Gestión Patch Cords PP2 / PP3', watts: 0, desc: 'Organizador horizontal 1U para separación ordenada de mazos de patch cords hacia switches Gigabit.' },
+          { startU: 25, sizeU: 1, kind: 'pp', unitCode: 'R1-PP3', label: 'Patch Panel 3 — 24p Cat 6 (REC, SR, GER)', sub: 'Recepción (3), Reuniones (3), Gerencia (4)', watts: 0, desc: 'Patch Panel 1U 24 puertos Cat 6. Ocupa puertos 01..10 y deja 14 puertos libres como reserva de crecimiento.' },
+          { startU: 24, sizeU: 1, kind: 'org', unitCode: 'R1-ORG4', label: 'Organizador Horizontal Ranurado 1U', sub: 'Gestión Patch Cords PP3 / PP4', watts: 0, desc: 'Organizador horizontal 1U que protege los patch cords PoE+ y enlaces troncales hacia R2.' },
+          { startU: 23, sizeU: 1, kind: 'pp', unitCode: 'R1-PP4', label: 'Patch Panel 4 — 24p Cat 6 (OB, APs, Trunk)', sub: 'Of. Bodega (4), 3 APs PoE+, 2 Trunk R2', watts: 0, desc: 'Patch Panel 1U 24 puertos Cat 6. Incluye Oficina Bodega (01..04), Access Points PoE+ (05..07) y Trunk hacia R2 (08..09).' },
+          { startU: 22, sizeU: 1, kind: 'org', unitCode: 'R1-ORG5', label: 'Organizador Horizontal Ranurado 1U', sub: 'Transición hacia Banco de Switches', watts: 0, desc: 'Organizador horizontal 1U ubicado inmediatamente sobre el banco de switches activos.' },
+          { startU: 21, sizeU: 1, kind: 'sw_gb', unitCode: 'R1-SW1', label: 'Switch 1 — 24p Gigabit L2 (R1-SW1)', sub: 'Conmutación Puestos OA-01A..12B', watts: 24, desc: 'Switch Gigabit 24 puertos RJ45 10/100/1000 Mbps + 4 SFP+ 10G. Atiende los 24 puertos de R1-PP1.' },
+          { startU: 20, sizeU: 1, kind: 'sw_gb', unitCode: 'R1-SW2', label: 'Switch 2 — 24p Gigabit L2 (R1-SW2)', sub: 'Conmutación OA, Contabilidad, RR.HH.', watts: 24, desc: 'Switch Gigabit 24 puertos RJ45 administrable. Atiende los 24 puertos de R1-PP2.' },
+          { startU: 19, sizeU: 1, kind: 'sw_gb', unitCode: 'R1-SW3', label: 'Switch 3 — 24p Gigabit L2 (R1-SW3)', sub: 'Recepción, Reuniones, Gerencia, Of. Bod.', watts: 22, desc: 'Switch Gigabit 24 puertos RJ45 con 10 puertos activos y 14 puertos de reserva.' },
+          { startU: 18, sizeU: 1, kind: 'sw_poe', unitCode: 'R1-SW4', label: 'Switch 4 — 24p PoE+ 802.3at (R1-SW4)', sub: 'Alimentación 3 APs Wi-Fi 6 + Uplinks R2', watts: 92, desc: 'Switch 24 puertos Gigabit PoE+ (370W budget). Alimenta OA-AP01, OA-AP02 y SR-AP01 (45W PoE) y enlaza Trunk con R2.' },
+          { startU: 17, sizeU: 1, kind: 'nvr', unitCode: 'R1-NVR1', label: 'NVR Grabador IP 16ch + HDD 4TB', sub: 'Grabación Continua 4 Cámaras IP', watts: 35, desc: 'Grabador de video en red (NVR) 1U con almacenamiento 4TB dedicado para las 2 cámaras de Bodega y 2 cámaras de Patio de Carga.' },
+          { startU: 4, sizeU: 1, kind: 'pdu', unitCode: 'R1-PDU1', label: 'PDU Regleta Energía 8 Tomas 1U', sub: 'Distribución Eléctrica Protegida', watts: 2, desc: 'Unidad de distribución de energía 19" 1U con interruptor bipolar iluminado y breaker termomagnético de 16A.' },
+          { startU: 2, sizeU: 2, kind: 'ups', unitCode: 'R1-UPS1', label: 'UPS Rackeable Online 2000VA (2U)', sub: 'Respaldo Batería Doble Conversión', watts: 100, desc: 'Sistema de alimentación ininterrumpida (UPS) Online 2000VA / 1800W en formato rack 2U. Garantiza autonomía > 35 min ante cortes eléctricos.' }
+        ]
+      },
+      R2: {
+        id: 'R2',
+        name: 'R2 — Gabinete Rack Mural 12U (IDF Bodega Muro Oeste)',
+        shortName: 'R2 IDF (12U Mural)',
+        subtitle: '19" Estándar EIA-310 · 600×450 mm · Enlazado a R1 MDF (38,0 m)',
+        totalU: 12,
+        upsCapacityVA: 1000,
+        items: [
+          { startU: 12, sizeU: 1, kind: 'pp', unitCode: 'R2-PP1', label: 'Patch Panel 1 — 24p Cat 6 (R2-PP1)', sub: '2 APs 6m, 2 Cám. Bodega, 3 Patio PE, 2 Trunk', watts: 0, desc: 'Patch Panel 1U 24 puertos Cat 6. Concentra los 7 enlaces PoE+ de Bodega/Patio Carga (01..07) y 2 enlaces troncales hacia R1 (08..09).' },
+          { startU: 11, sizeU: 1, kind: 'org', unitCode: 'R2-ORG1', label: 'Organizador Horizontal Ranurado 1U', sub: 'Ordenamiento Patch Cords R2', watts: 0, desc: 'Organizador horizontal 1U entre R2-PP1 y el Switch PoE+ R2-SW1.' },
+          { startU: 10, sizeU: 1, kind: 'sw_poe', unitCode: 'R2-SW1', label: 'Switch 24p PoE+ 802.3at (R2-SW1)', sub: 'Alimentación 3 APs + 4 Cámaras IP67', watts: 118, desc: 'Switch Gigabit 24 puertos PoE+ 802.3at (370W). Alimenta los 7 equipos de Bodega y Patio de Carga (~88W PoE) manteniendo enlaces ≤ 54,2 m.' },
+          { startU: 3, sizeU: 1, kind: 'pdu', unitCode: 'R2-PDU1', label: 'PDU Regleta Energía 8 Tomas 1U', sub: 'Distribución Eléctrica R2', watts: 2, desc: 'Regleta PDU 1U conectada a salida respaldada de la UPS R2.' },
+          { startU: 1, sizeU: 2, kind: 'ups', unitCode: 'R2-UPS1', label: 'UPS Rackeable Online 1000VA (2U)', sub: 'Respaldo PoE+ Bodega y Seguridad', watts: 55, desc: 'UPS Rackeable 1000VA / 900W 2U que mantiene operativas las cámaras IP de los andenes y APs de bodega ante cortes de energía.' }
+        ]
+      }
+    };
+
+    // Mapa completo de los 24 puertos por cada Patch Panel / Switch para trazabilidad TIA-606
+    function getPortTraceInfo(rackId, unitCode, portNum) {
+      const pStr = String(portNum).padStart(2, '0');
+      let ppCode = unitCode;
+      let swCode = unitCode;
+      if (unitCode.includes('-SW')) {
+        ppCode = unitCode.replace('-SW', '-PP');
+      } else if (unitCode.includes('-PP')) {
+        swCode = unitCode.replace('-PP', '-SW');
+      }
+
+      const fullPP = `${ppCode}-${pStr}`;
+      const fullSW = `${swCode}-${pStr}`;
+
+      // Enlaces Troncales R1 <-> R2 en puertos 08 y 09 de R1-PP4 / R2-PP1
+      if (fullPP === 'R1-PP4-08' || fullPP === 'R2-PP1-08') {
+        return {
+          status: 'trunk',
+          outlet: 'TRUNK-R1-R2-A (Uplink Principal)',
+          room: 'Sala Telecom MDF ↔ Bodega IDF',
+          pp: fullPP,
+          sw: fullSW,
+          length: '38,0 m',
+          service: 'Enlace Troncal Gigabit (Datos + VLANs)'
+        };
+      }
+      if (fullPP === 'R1-PP4-09' || fullPP === 'R2-PP1-09') {
+        return {
+          status: 'trunk',
+          outlet: 'TRUNK-R1-R2-B (Uplink Redundante)',
+          room: 'Sala Telecom MDF ↔ Bodega IDF',
+          pp: fullPP,
+          sw: fullSW,
+          length: '38,0 m',
+          service: 'Enlace Troncal Redundante / CCTV'
+        };
+      }
+
+      // Buscar en ALL_LINKS por puerto Patch Panel exacto
+      const found = ALL_LINKS.find(l => l.pp === fullPP);
+      if (found) {
+        const isPoE = found.service.toLowerCase().includes('poe');
+        return {
+          status: isPoE ? 'poe' : 'data',
+          outlet: `${found.id} (${found.room})`,
+          room: found.room,
+          pp: found.pp,
+          sw: found.sw,
+          length: `${found.len.toFixed(1)} m (${found.cable})`,
+          service: found.service
+        };
+      }
+
+      // Puerto Libre (Reserva >= 30%)
+      return {
+        status: 'free',
+        outlet: 'PUERTO LIBRE (Reserva de Crecimiento)',
+        room: 'Disponible para expansión futura',
+        pp: fullPP,
+        sw: fullSW,
+        length: '—',
+        service: 'Sin asignar (Cumple reserva ≥ 30%)'
+      };
+    }
+
+    function selectRackView(mode) {
+      rackViewMode = mode;
+      if (mode === 'R1' || mode === 'R2') {
+        activeRackId = mode;
+        selectedRackItemIdx = mode === 'R1' ? 3 : 0;
+        selectedPortNumber = 1;
+      }
+
+      ['R1', 'R2', 'BOTH'].forEach(m => {
+        const btn = document.getElementById(m === 'R1' ? 'btnSelectR1' : (m === 'R2' ? 'btnSelectR2' : 'btnSelectBoth'));
+        btn.className = mode === m
+          ? 'px-3 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-sm cursor-pointer transition'
+          : 'px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 cursor-pointer transition';
+      });
+
+      document.getElementById('targetUInput').max = RACKS_DATA[activeRackId].totalU;
+      document.getElementById('targetUInput').value = activeRackId === 'R1' ? 12 : 6;
+      document.getElementById('catalogTargetRackLbl').textContent = activeRackId;
+
+      renderRackElevation();
+    }
+
+    function toggleRackGlassDoor() {
+      rackGlassClosed = !rackGlassClosed;
+      const btn = document.getElementById('btnToggleGlass');
+      btn.innerHTML = rackGlassClosed
+        ? '<span>🔒 Puerta Vidrio: Cerrada</span>'
+        : '<span>🚪 Puerta Vidrio: Abierta</span>';
+      renderRackElevation();
+    }
+
+    // Genera el SVG vectorial detallado e interactuable de un Rack completo
+    function buildRackInteractiveSvg(rackId, isCompact) {
+      const rack = RACKS_DATA[rackId];
+      const uHeight = isCompact ? 21 : 25;
+      const topPad = 44;
+      const bottomPad = 32;
+      const svgWidth = isCompact ? 370 : 490;
+      const svgHeight = topPad + rack.totalU * uHeight + bottomPad;
+      const railLeftX = 44;
+      const innerWidth = svgWidth - 88;
+
+      const slotMap = {};
+      rack.items.forEach((item, idx) => {
+        for (let u = item.startU; u < item.startU + item.sizeU; u++) {
+          slotMap[u] = { item, idx, isTop: u === item.startU + item.sizeU - 1 };
+        }
+      });
+
+      let svg = `<svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="${isCompact ? 'w-[355px]' : 'w-full max-w-[520px]'} h-auto select-none shrink-0 rounded-xl shadow-2xl">`;
+
+      svg += `
+        <defs>
+          <linearGradient id="cabinetGrad_${rackId}" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#0f172a"/>
+            <stop offset="50%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+          </linearGradient>
+          <linearGradient id="glassReflection_${rackId}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.16"/>
+            <stop offset="45%" stop-color="#ffffff" stop-opacity="0.04"/>
+            <stop offset="55%" stop-color="#38bdf8" stop-opacity="0.14"/>
+            <stop offset="100%" stop-color="#0284c7" stop-opacity="0.08"/>
+          </linearGradient>
+        </defs>
+      `;
+
+      // Carcasa exterior del gabinete 19"
+      svg += `<rect x="4" y="4" width="${svgWidth - 8}" height="${svgHeight - 8}" rx="10" fill="url(#cabinetGrad_${rackId})" stroke="#475569" stroke-width="2.5"/>`;
+
+      // Techo ventilado y etiqueta superior del Rack
+      svg += `<rect x="16" y="10" width="${svgWidth - 32}" height="24" rx="4" fill="#020617" stroke="#334155" stroke-width="1"/>`;
+      svg += `<text x="${svgWidth / 2}" y="25" font-size="10.5" font-weight="800" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#60a5fa">${rack.shortName}</text>`;
+
+      // Fondo interior oscuro y rieles perforados 19"
+      const bodyHeight = rack.totalU * uHeight;
+      svg += `<rect x="18" y="${topPad}" width="${svgWidth - 36}" height="${bodyHeight}" fill="#020617" stroke="#334155" stroke-width="1.2"/>`;
+      svg += `<rect x="18" y="${topPad}" width="26" height="${bodyHeight}" fill="#1e293b" stroke="#334155" stroke-width="1"/>`;
+      svg += `<rect x="${svgWidth - 44}" y="${topPad}" width="26" height="${bodyHeight}" fill="#1e293b" stroke="#334155" stroke-width="1"/>`;
+
+      for (let u = rack.totalU; u >= 1; u--) {
+        const rowIdx = rack.totalU - u;
+        const y = topPad + rowIdx * uHeight;
+        const uLabel = `U${String(u).padStart(2, '0')}`;
+
+        svg += `<text x="31" y="${y + uHeight / 2 + 3.5}" font-size="8.5" font-weight="700" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#94a3b8">${uLabel}</text>`;
+        svg += `<text x="${svgWidth - 31}" y="${y + uHeight / 2 + 3.5}" font-size="8.5" font-weight="700" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#94a3b8">${uLabel}</text>`;
+
+        [y + 4, y + uHeight - 7].forEach(hy => {
+          svg += `<rect x="20" y="${hy}" width="2.5" height="2.5" fill="#0f172a"/>`;
+          svg += `<rect x="${svgWidth - 22.5}" y="${hy}" width="2.5" height="2.5" fill="#0f172a"/>`;
+        });
+
+        const slot = slotMap[u];
+        if (!slot) {
+          svg += `
+            <g class="cursor-pointer" onclick="handleEmptyUClick('${rackId}', ${u})">
+              <rect x="${railLeftX + 1}" y="${y + 1}" width="${innerWidth - 2}" height="${uHeight - 2}" fill="#090d16" stroke="#1e293b" stroke-width="0.8" stroke-dasharray="3 2"/>
+              <text x="${svgWidth / 2}" y="${y + uHeight / 2 + 3}" font-size="8" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#475569">
+                — Espacio Libre Reserva (${uLabel}) —
+              </text>
+            </g>
+          `;
+        } else if (slot.isTop) {
+          const item = slot.item;
+          const totalH = item.sizeU * uHeight;
+          const isSelected = activeRackId === rackId && selectedRackItemIdx === slot.idx;
+          svg += renderEquipmentChassisSvg(rackId, slot.idx, item, railLeftX, y, innerWidth, totalH, isSelected, isCompact);
+        }
+      }
+
+      // Base del gabinete
+      const baseY = topPad + bodyHeight;
+      if (rackId === 'R1') {
+        svg += `<rect x="28" y="${baseY + 2}" width="24" height="14" rx="2" fill="#334155"/>`;
+        svg += `<rect x="${svgWidth - 52}" y="${baseY + 2}" width="24" height="14" rx="2" fill="#334155"/>`;
+        svg += `<text x="${svgWidth / 2}" y="${baseY + 14}" font-size="8.5" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#64748b">BASE PISO NIVELADA · TIERRA EQUIPOTENCIAL</text>`;
+      } else {
+        svg += `<text x="${svgWidth / 2}" y="${baseY + 14}" font-size="8.5" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#64748b">ANCLAJE MURAL 4 PERNOS EXPANSIÓN · ALTURA 3,0 m</text>`;
+      }
+
+      // Puerta frontal de vidrio templado (si está cerrada)
+      if (rackGlassClosed) {
+        svg += `
+          <g class="rack-glass-door pointer-events-none">
+            <rect x="14" y="${topPad - 4}" width="${svgWidth - 28}" height="${bodyHeight + 8}" rx="6" fill="url(#glassReflection_${rackId})" stroke="#38bdf8" stroke-width="2"/>
+            <rect x="${svgWidth - 28}" y="${topPad + bodyHeight / 2 - 22}" width="8" height="44" rx="3" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+            <circle cx="${svgWidth - 24}" cy="${topPad + bodyHeight / 2}" r="2" fill="#38bdf8"/>
+          </g>
+        `;
+      }
+
+      svg += `</svg>`;
+      return svg;
+    }
+
+    // Dibuja el chasis vectorial realista de cada tipo de equipo dentro del rack
+    function renderEquipmentChassisSvg(rackId, itemIdx, item, x, y, w, h, isSelected, isCompact) {
+      const strokeSel = isSelected ? '#38bdf8' : '#475569';
+      const strokeW = isSelected ? '2.2' : '1';
+      let out = `<g class="cursor-pointer" onclick="selectRackEquipment('${rackId}', ${itemIdx})">`;
+
+      out += `<rect x="${x}" y="${y + 1}" width="${w}" height="${h - 2}" rx="3" fill="#1e293b" stroke="${strokeSel}" stroke-width="${strokeW}"/>`;
+      out += `<circle cx="${x + 5}" cy="${y + h / 2}" r="1.8" fill="#94a3b8"/>`;
+      out += `<circle cx="${x + w - 5}" cy="${y + h / 2}" r="1.8" fill="#94a3b8"/>`;
+
+      const ix = x + 11;
+      const iw = w - 22;
+
+      if (item.kind === 'pp' || item.kind === 'sw_gb' || item.kind === 'sw_poe') {
+        const isSwitch = item.kind.startsWith('sw');
+        const bgChassis = item.kind === 'pp' ? '#0f172a' : (item.kind === 'sw_poe' ? '#1e1b4b' : '#064e3b');
+        out += `<rect x="${ix}" y="${y + 2}" width="${iw}" height="${h - 4}" rx="2" fill="${bgChassis}"/>`;
+
+        const tagW = isCompact ? 50 : 66;
+        out += `<text x="${ix + 4}" y="${y + h / 2 + 3}" font-size="${isCompact ? '7' : '8'}" font-weight="800" font-family="JetBrains Mono, monospace" fill="#f8fafc">${item.unitCode}</text>`;
+
+        const portsStartX = ix + tagW;
+        const portsAvailW = iw - tagW - (isSwitch ? (isCompact ? 26 : 36) : 6);
+        const groupGap = 4;
+        const portW = (portsAvailW - groupGap * 3) / 24;
+        const portH = Math.max(8, h - 10);
+
+        for (let p = 1; p <= 24; p++) {
+          const grp = Math.floor((p - 1) / 6);
+          const px = portsStartX + (p - 1) * portW + grp * groupGap;
+          const py = y + (h - portH) / 2;
+
+          const trace = getPortTraceInfo(rackId, item.unitCode, p);
+          let portFill = '#1e293b';
+          let portStroke = '#475569';
+          if (trace.status === 'data') { portFill = '#2563eb'; portStroke = '#93c5fd'; }
+          else if (trace.status === 'poe') { portFill = '#d97706'; portStroke = '#fcd34d'; }
+          else if (trace.status === 'trunk') { portFill = '#7c3aed'; portStroke = '#ddd6fe'; }
+
+          const isPortSel = isSelected && selectedPortNumber === p;
+          if (isPortSel) {
+            portStroke = '#ffffff';
+          }
+
+          out += `
+            <g class="rack-port-btn" onclick="event.stopPropagation(); selectRackPort('${rackId}', ${itemIdx}, ${p})">
+              <rect x="${px.toFixed(1)}" y="${py.toFixed(1)}" width="${Math.max(4, portW - 1.2).toFixed(1)}" height="${portH.toFixed(1)}" rx="1"
+                fill="${portFill}" stroke="${portStroke}" stroke-width="${isPortSel ? '1.6' : '0.7'}"/>
+              ${!isCompact ? `<text x="${(px + (portW - 1.2) / 2).toFixed(1)}" y="${(py + portH - 2).toFixed(1)}" font-size="5" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#ffffff">${p}</text>` : ''}
+            </g>
+          `;
+        }
+
+        if (isSwitch) {
+          const sfpX = portsStartX + portsAvailW + 4;
+          out += `<rect x="${sfpX}" y="${y + 5}" width="${isCompact ? 18 : 26}" height="${h - 10}" rx="1.5" fill="#020617" stroke="#64748b" stroke-width="0.8"/>`;
+          out += `<text x="${sfpX + (isCompact ? 9 : 13)}" y="${y + h / 2 + 2.5}" font-size="6" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#34d399">SFP+</text>`;
+        }
+      } else if (item.kind === 'org') {
+        out += `<rect x="${ix}" y="${y + 3}" width="${iw}" height="${h - 6}" rx="2" fill="#090d16" stroke="#334155" stroke-width="0.8"/>`;
+        const teeth = isCompact ? 14 : 20;
+        const step = iw / teeth;
+        for (let t = 1; t < teeth; t++) {
+          out += `<line x1="${(ix + t * step).toFixed(1)}" y1="${y + 4}" x2="${(ix + t * step).toFixed(1)}" y2="${y + h - 4}" stroke="#334155" stroke-width="1.5"/>`;
+        }
+        out += `<rect x="${ix + iw / 2 - 48}" y="${y + h / 2 - 5}" width="96" height="10" rx="2" fill="#0f172a"/>`;
+        out += `<text x="${ix + iw / 2}" y="${y + h / 2 + 2.5}" font-size="6.5" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#94a3b8">ORGANIZADOR 1U</text>`;
+      } else if (item.kind === 'ups') {
+        out += `<rect x="${ix}" y="${y + 2}" width="${iw}" height="${h - 4}" rx="3" fill="#090d16" stroke="#ea580c" stroke-width="1"/>`;
+        for (let r = 0; r < 5; r++) {
+          out += `<line x1="${ix + 10}" y1="${y + 8 + r * 6}" x2="${ix + 65}" y2="${y + 8 + r * 6}" stroke="#334155" stroke-width="2"/>`;
+        }
+        const lcdW = isCompact ? 115 : 155;
+        const lcdX = ix + iw / 2 - lcdW / 2;
+        out += `<rect x="${lcdX}" y="${y + 6}" width="${lcdW}" height="${h - 12}" rx="3" fill="#0284c7" fill-opacity="0.25" stroke="#38bdf8" stroke-width="1"/>`;
+        out += `<text x="${lcdX + lcdW / 2}" y="${y + 18}" font-size="7.5" font-weight="800" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#7dd3fc">${item.unitCode} · ONLINE 220V</text>`;
+        out += `<text x="${lcdX + lcdW / 2}" y="${y + 31}" font-size="7" font-family="JetBrains Mono, monospace" text-anchor="middle" fill="#34d399">CARGA 24% · BAT 100%</text>`;
+      } else if (item.kind === 'pdu') {
+        out += `<rect x="${ix}" y="${y + 3}" width="${iw}" height="${h - 6}" rx="2" fill="#18181b" stroke="#be123c" stroke-width="0.9"/>`;
+        out += `<rect x="${ix + 6}" y="${y + 6}" width="14" height="${h - 12}" rx="1.5" fill="#e11d48"/>`;
+        out += `<text x="${ix + 26}" y="${y + h / 2 + 3}" font-size="7" font-weight="700" font-family="JetBrains Mono, monospace" fill="#fda4af">${item.unitCode}</text>`;
+        const outlets = 6;
+        for (let o = 0; o < outlets; o++) {
+          const ox = ix + 82 + o * ((iw - 95) / outlets);
+          out += `<rect x="${ox.toFixed(1)}" y="${y + 6}" width="14" height="${h - 12}" rx="1.5" fill="#090d16" stroke="#52525b" stroke-width="0.8"/>`;
+        }
+      } else if (item.kind === 'router') {
+        out += `<rect x="${ix}" y="${y + 2}" width="${iw}" height="${h - 4}" rx="2" fill="#451a03" stroke="#d97706" stroke-width="0.9"/>`;
+        out += `<text x="${ix + 6}" y="${y + h / 2 + 3}" font-size="7.5" font-weight="800" font-family="JetBrains Mono, monospace" fill="#fde68a">${item.unitCode} · FIREWALL</text>`;
+        out += `<rect x="${ix + iw - 92}" y="${y + 5}" width="14" height="${h - 10}" rx="1" fill="#0284c7"/>`;
+        for (let p = 0; p < 4; p++) {
+          out += `<rect x="${ix + iw - 72 + p * 16}" y="${y + 5}" width="12" height="${h - 10}" rx="1" fill="#10b981"/>`;
+        }
+      } else if (item.kind === 'nvr') {
+        out += `<rect x="${ix}" y="${y + 2}" width="${iw}" height="${h - 4}" rx="2" fill="#2e1065" stroke="#9333ea" stroke-width="0.9"/>`;
+        out += `<text x="${ix + 6}" y="${y + h / 2 + 3}" font-size="7.5" font-weight="800" font-family="JetBrains Mono, monospace" fill="#e9d5ff">${item.unitCode} · NVR 4TB</text>`;
+        out += `<rect x="${ix + iw - 110}" y="${y + 5}" width="48" height="${h - 10}" rx="1" fill="#090d16" stroke="#6b21a8"/>`;
+        out += `<rect x="${ix + iw - 56}" y="${y + 5}" width="48" height="${h - 10}" rx="1" fill="#090d16" stroke="#6b21a8"/>`;
+      } else {
+        out += `<rect x="${ix}" y="${y + h - 6}" width="${iw}" height="4" fill="#71717a"/>`;
+        out += `<rect x="${ix + 16}" y="${y + 3}" width="${iw * 0.48}" height="${h - 9}" rx="2" fill="#27272a" stroke="#a1a1aa" stroke-width="0.8"/>`;
+        out += `<text x="${ix + 22}" y="${y + h / 2 + 1}" font-size="7" font-weight="700" font-family="JetBrains Mono, monospace" fill="#e4e4e7">ONT ISP FIBRA</text>`;
+        out += `<circle cx="${ix + iw * 0.48 + 4}" cy="${y + 8}" r="2" fill="#22c55e"/>`;
+        out += `<circle cx="${ix + iw * 0.48 + 10}" cy="${y + 8}" r="2" fill="#22c55e"/>`;
+      }
+
+      out += `</g>`;
+      return out;
+    }
+
+    function selectRackEquipment(rackId, itemIdx) {
+      activeRackId = rackId;
+      selectedRackItemIdx = itemIdx;
+      document.getElementById('catalogTargetRackLbl').textContent = rackId;
+      renderRackElevation();
+    }
+
+    function selectRackPort(rackId, itemIdx, portNum) {
+      activeRackId = rackId;
+      selectedRackItemIdx = itemIdx;
+      selectedPortNumber = portNum;
+      document.getElementById('catalogTargetRackLbl').textContent = rackId;
+      renderRackElevation();
+    }
+
+    function handleEmptyUClick(rackId, u) {
+      activeRackId = rackId;
+      document.getElementById('targetUInput').max = RACKS_DATA[rackId].totalU;
+      document.getElementById('targetUInput').value = u;
+      document.getElementById('catalogTargetRackLbl').textContent = rackId;
+      showToast(`Posición U${String(u).padStart(2, '0')} de ${rackId} lista para insertar equipo.`);
+    }
+
+    function renderRackElevation() {
+      const rack = RACKS_DATA[activeRackId];
+      const viewport = document.getElementById('rackVisualViewport');
+
+      if (rackViewMode === 'BOTH') {
+        document.getElementById('rackCanvasTitle').textContent = 'Vista Comparativa — R1 MDF (32U Piso) + R2 IDF Bodega (12U Mural)';
+        document.getElementById('rackCanvasSubtitle').textContent = 'Topología estrella jerárquica · Enlace troncal R1-PP4-08/09 ↔ R2-PP1-08/09 (38,0 m)';
+        viewport.innerHTML = buildRackInteractiveSvg('R1', true) + buildRackInteractiveSvg('R2', true);
+      } else {
+        document.getElementById('rackCanvasTitle').textContent = rack.name;
+        document.getElementById('rackCanvasSubtitle').textContent = rack.subtitle;
+        viewport.innerHTML = buildRackInteractiveSvg(activeRackId, false);
+      }
+
+      let usedU = 0;
+      let totalWatts = 0;
+      let ppCount = 0;
+      let swCount = 0;
+
+      rack.items.forEach(it => {
+        usedU += it.sizeU;
+        totalWatts += (it.watts || 0);
+        if (it.kind === 'pp') ppCount++;
+        if (it.kind.startsWith('sw')) swCount++;
+      });
+
+      const freeU = rack.totalU - usedU;
+      const pctFreeU = ((freeU / rack.totalU) * 100).toFixed(1);
+
+      const usedPorts = activeRackId === 'R1' ? 67 : 9;
+      const totalPP = Math.max(1, ppCount) * 24;
+      const totalSW = Math.max(1, swCount) * 24;
+      const freePP = Math.max(0, totalPP - usedPorts);
+      const freeSW = Math.max(0, totalSW - usedPorts);
+      const pctFreePP = ((freePP / totalPP) * 100).toFixed(1);
+      const pctFreeSW = ((freeSW / totalSW) * 100).toFixed(1);
+
+      document.getElementById('metricUFree').textContent = `${pctFreeU}%`;
+      document.getElementById('metricUFree').className = parseFloat(pctFreeU) >= 30 ? 'text-xl font-extrabold text-emerald-600 font-mono mt-0.5' : 'text-xl font-extrabold text-rose-600 font-mono mt-0.5';
+      document.getElementById('metricUDetail').textContent = `${freeU}U libres / ${rack.totalU}U totales`;
+      document.getElementById('badgeUStatus').textContent = parseFloat(pctFreeU) >= 30 ? '≥ 30% OK' : '< 30% ALERTA';
+      document.getElementById('badgeUStatus').className = parseFloat(pctFreeU) >= 30 ? 'text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded' : 'text-[10px] font-mono font-bold bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded';
+
+      document.getElementById('metricPPFree').textContent = `${pctFreePP}%`;
+      document.getElementById('metricPPDetail').textContent = `${freePP} libres / ${totalPP} puertos`;
+      document.getElementById('badgePPStatus').textContent = parseFloat(pctFreePP) >= 30 ? '≥ 30% OK' : '< 30% ALERTA';
+
+      document.getElementById('metricSWFree').textContent = `${pctFreeSW}%`;
+      document.getElementById('metricSWDetail').textContent = `${freeSW} libres / ${totalSW} puertos`;
+      document.getElementById('badgeSWStatus').textContent = parseFloat(pctFreeSW) >= 30 ? '≥ 30% OK' : '< 30% ALERTA';
+
+      const upsMaxW = rack.upsCapacityVA * 0.9;
+      const upsLoadPct = Math.min(100, Math.round((totalWatts / upsMaxW) * 100));
+      document.getElementById('metricPowerWatts').textContent = `${totalWatts} W`;
+      document.getElementById('metricPowerDetail').textContent = `UPS ${rack.upsCapacityVA}VA (Carga ${upsLoadPct}%)`;
+
+      if (selectedRackItemIdx >= rack.items.length) selectedRackItemIdx = 0;
+      const eq = rack.items[selectedRackItemIdx];
+      if (!eq) return;
+
+      const uRangeStr = eq.sizeU > 1 ? `U${eq.startU}–U${eq.startU + eq.sizeU - 1}` : `U${String(eq.startU).padStart(2, '0')}`;
+      document.getElementById('inspRackUnitBadge').textContent = `${activeRackId} · ${uRangeStr}`;
+      document.getElementById('inspEqTitle').textContent = eq.label;
+      document.getElementById('inspEqSubtitle').textContent = `${eq.unitCode} · ${eq.sub}`;
+      document.getElementById('inspEqHeight').textContent = `${eq.sizeU}U (${uRangeStr})`;
+      document.getElementById('inspEqPower').textContent = eq.watts > 0 ? `${eq.watts} W Activo` : 'Pasivo (0 W)';
+      document.getElementById('inspEqDesc').textContent = eq.desc;
+
+      const portBox = document.getElementById('portInspectorBox');
+      if (eq.kind === 'pp' || eq.kind.startsWith('sw')) {
+        portBox.classList.remove('hidden');
+        const grid = document.getElementById('portGrid24');
+        grid.innerHTML = '';
+        let activeCount = 0;
+
+        for (let p = 1; p <= 24; p++) {
+          const info = getPortTraceInfo(activeRackId, eq.unitCode, p);
+          if (info.status !== 'free') activeCount++;
+
+          let btnClass = 'bg-slate-800 text-slate-400 border-slate-600';
+          if (info.status === 'data') btnClass = 'bg-blue-600 text-white border-blue-400';
+          else if (info.status === 'poe') btnClass = 'bg-amber-600 text-white border-amber-300';
+          else if (info.status === 'trunk') btnClass = 'bg-purple-600 text-white border-purple-300';
+
+          if (p === selectedPortNumber) {
+            btnClass += ' ring-2 ring-white scale-105 font-extrabold';
+          }
+
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = `py-1 rounded border text-center cursor-pointer transition ${btnClass}`;
+          b.textContent = String(p).padStart(2, '0');
+          b.onclick = () => {
+            selectedPortNumber = p;
+            renderRackElevation();
+          };
+          grid.appendChild(b);
+        }
+
+        document.getElementById('inspEqPortsSummary').textContent = `${activeCount} / 24 Activos`;
+        const selTrace = getPortTraceInfo(activeRackId, eq.unitCode, selectedPortNumber);
+        document.getElementById('selectedPortTag').textContent = `${eq.unitCode}-${String(selectedPortNumber).padStart(2, '0')}`;
+        document.getElementById('traceOutlet').textContent = selTrace.outlet;
+        document.getElementById('tracePath').textContent = `${selTrace.pp} ➔ ${selTrace.sw}`;
+        document.getElementById('traceMeta').textContent = `${selTrace.length} · ${selTrace.service}`;
+      } else {
+        portBox.classList.add('hidden');
+        document.getElementById('inspEqPortsSummary').textContent = eq.kind === 'ups' ? `${rack.upsCapacityVA} VA` : 'Infraestructura';
+      }
+    }
+
+    function isRangeFree(rack, startU, sizeU, ignoreIdx = -1) {
+      if (startU < 1 || startU + sizeU - 1 > rack.totalU) return false;
+      for (let i = 0; i < rack.items.length; i++) {
+        if (i === ignoreIdx) continue;
+        const it = rack.items[i];
+        const a1 = startU, a2 = startU + sizeU - 1;
+        const b1 = it.startU, b2 = it.startU + it.sizeU - 1;
+        if (a1 <= b2 && b1 <= a2) return false;
+      }
+      return true;
+    }
+
+    function moveSelectedRackItem(delta) {
+      const rack = RACKS_DATA[activeRackId];
+      const item = rack.items[selectedRackItemIdx];
+      if (!item) return;
+      const newStart = item.startU + delta;
+      if (!isRangeFree(rack, newStart, item.sizeU, selectedRackItemIdx)) {
+        showToast('No se puede mover: colisión con otro equipo o límite superior/inferior del rack.');
+        return;
+      }
+      item.startU = newStart;
+      renderRackElevation();
+    }
+
+    function removeSelectedRackItem() {
+      const rack = RACKS_DATA[activeRackId];
+      if (rack.items.length <= 1) {
+        showToast('El rack debe mantener al menos un componente instalado.');
+        return;
+      }
+      rack.items.splice(selectedRackItemIdx, 1);
+      selectedRackItemIdx = 0;
+      renderRackElevation();
+      showToast('Equipo removido del rack.');
+    }
+
+    function addEquipmentToRack() {
+      const rack = RACKS_DATA[activeRackId];
+      const [kind, label, sizeStr] = document.getElementById('catalogItemSelect').value.split('|');
+      const sizeU = parseInt(sizeStr, 10);
+      const startU = parseInt(document.getElementById('targetUInput').value, 10);
+
+      if (!isRangeFree(rack, startU, sizeU)) {
+        showToast(`La posición U${startU} (${sizeU}U) está ocupada o excede las ${rack.totalU}U del rack.`);
+        return;
+      }
+      const nextNum = rack.items.filter(i => i.kind === kind).length + 1;
+      const prefixMap = { pp: 'PP', org: 'ORG', sw_gb: 'SW', sw_poe: 'SW', router: 'RTR', tray: 'BND', nvr: 'NVR', pdu: 'PDU', ups: 'UPS' };
+      const unitCode = `${activeRackId}-${prefixMap[kind] || 'EQ'}${nextNum}`;
+      const wattsMap = { pp: 0, org: 0, sw_gb: 24, sw_poe: 90, router: 28, tray: 15, nvr: 35, pdu: 2, ups: 80 };
+
+      rack.items.push({
+        startU,
+        sizeU,
+        kind,
+        unitCode,
+        label: `${label} (${unitCode})`,
+        sub: 'Equipo agregado de expansión',
+        watts: wattsMap[kind] || 0,
+        desc: 'Componente adicional incorporado desde el catálogo de equipamiento 19" EIA-310.'
+      });
+      selectedRackItemIdx = rack.items.length - 1;
+      renderRackElevation();
+      showToast(`${label} instalado en ${activeRackId} posición U${startU}.`);
+    }
+
+    function renderPatchPlanTable() {
+      const tbody = document.getElementById('patchPlanTableBody');
+      tbody.innerHTML = '';
+      ALL_LINKS.forEach(link => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="py-1.5 px-3 font-bold text-blue-700">${link.id}</td>
+          <td class="py-1.5 px-3 text-slate-700">${link.id} (Extremo Salida y Rack)</td>
+          <td class="py-1.5 px-3 font-bold text-slate-900">${link.pp}</td>
+          <td class="py-1.5 px-3 text-slate-500">Patch Cord Cat 6 (0,5 m)</td>
+          <td class="py-1.5 px-3 font-bold text-emerald-700">${link.sw}</td>
+          <td class="py-1.5 px-3 font-sans text-slate-600">${link.service}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. PRESUPUESTO EN CLP (SINTHESI / LK.CL / MERCADO CHILENO) + IVA 19%
+    // -------------------------------------------------------------------------
+    const DEFAULT_BUDGET = [
+      { cat: 'Materiales', desc: 'Cable U/UTP Cat 6 LSZH Interior (Caja 305 m) — 2.840,5 m c/merma', source: 'Sinthesi Chile', qty: 10, price: 119900 },
+      { cat: 'Materiales', desc: 'Cable U/UTP Cat 6 Exterior Cubierta PE (Bobina 305 m) — Patio Carga', source: 'Sinthesi Chile', qty: 1, price: 148500 },
+      { cat: 'Materiales', desc: 'Jack Modular RJ45 Cat 6 Hembra (74 activos + 6 repuesto)', source: 'LK.cl / Sinthesi', qty: 80, price: 3490 },
+      { cat: 'Materiales', desc: 'Faceplate Doble (2 bocas) blanco para canaleta/muro', source: 'Sinthesi Chile', qty: 29, price: 1890 },
+      { cat: 'Materiales', desc: 'Faceplate Simple (1 boca) blanco para impresoras y pantalla', source: 'Sinthesi Chile', qty: 4, price: 1690 },
+      { cat: 'Materiales', desc: 'Patch Cord U/UTP Cat 6 LSZH 2,0 m (Área de trabajo puestos)', source: 'LK.cl', qty: 65, price: 2990 },
+      { cat: 'Materiales', desc: 'Patch Cord U/UTP Cat 6 LSZH 0,5 m (Ordenamiento Racks R1 y R2)', source: 'LK.cl', qty: 80, price: 1990 },
+      { cat: 'Materiales', desc: 'Patch Panel Cat 6 24 Puertos 1U 19" (4 en R1 + 1 en R2)', source: 'Sinthesi Chile', qty: 5, price: 48900 },
+      { cat: 'Materiales', desc: 'Organizador Horizontal de Cables 1U 19" (5 en R1 + 1 en R2)', source: 'Sinthesi Chile', qty: 6, price: 14900 },
+      { cat: 'Materiales', desc: 'Switch 24 Puertos Gigabit 1U 19" (R1-SW1 a SW3)', source: 'LK.cl', qty: 3, price: 139900 },
+      { cat: 'Materiales', desc: 'Switch 24 Puertos Gigabit PoE+ (802.3at, 370W) 1U (R1 y R2)', source: 'LK.cl', qty: 2, price: 349000 },
+      { cat: 'Materiales', desc: 'Router / Firewall Empresarial Gigabit Dual-WAN 1U (R1 MDF)', source: 'LK.cl', qty: 1, price: 245000 },
+      { cat: 'Materiales', desc: 'NVR Grabador IP 16 Canales 1U + Disco Duro 4TB Vigilancia (R1)', source: 'Dist. Nacional', qty: 1, price: 310000 },
+      { cat: 'Materiales', desc: 'Access Point Wi-Fi 6 Empresarial Interior PoE+ (Oficinas y SR)', source: 'LK.cl', qty: 3, price: 129900 },
+      { cat: 'Materiales', desc: 'Access Point Wi-Fi 6 Bodega PoE+ + Kit Soporte Altura 6,0 m', source: 'LK.cl', qty: 2, price: 154900 },
+      { cat: 'Materiales', desc: 'Access Point Exterior IP67 Wi-Fi 6 PoE+ (Patio de Carga)', source: 'LK.cl', qty: 1, price: 219000 },
+      { cat: 'Materiales', desc: 'Cámara IP Domo/Bullet 4MP PoE+ Interior (Bodega 6,0 m)', source: 'Dist. Nacional', qty: 2, price: 79900 },
+      { cat: 'Materiales', desc: 'Cámara IP Bullet 4MP IP67 Exterior PoE+ (Andenes Patio Carga)', source: 'Dist. Nacional', qty: 2, price: 109900 },
+      { cat: 'Materiales', desc: 'Gabinete Rack de Piso 32U 19" (600×800 mm) R1 MDF', source: 'Sinthesi Chile', qty: 1, price: 429000 },
+      { cat: 'Materiales', desc: 'Gabinete Rack Mural 12U 19" (600×450 mm) R2 IDF Bodega', source: 'Sinthesi Chile', qty: 1, price: 139000 },
+      { cat: 'Materiales', desc: 'UPS Rackeable Online 2000VA 2U (Respaldo R1 MDF)', source: 'Sinthesi Chile', qty: 1, price: 389000 },
+      { cat: 'Materiales', desc: 'UPS Rackeable 1000VA 2U (Respaldo R2 IDF Bodega)', source: 'Sinthesi Chile', qty: 1, price: 215000 },
+      { cat: 'Materiales', desc: 'PDU Regleta Energía 8 Tomas 1U 19" + Bandeja Fija 1U ISP', source: 'Sinthesi Chile', qty: 3, price: 25500 },
+      { cat: 'Materiales', desc: 'Bandeja Portacables Ranurada Galvanizada 200×50 mm (Tramos 3 m)', source: 'Sinthesi Chile', qty: 36, price: 16900 },
+      { cat: 'Materiales', desc: 'Canaleta PVC Blanca 40×25 mm (Tira 2 m, bajadas oficinas)', source: 'Sinthesi Chile', qty: 42, price: 3290 },
+      { cat: 'Materiales', desc: 'Tubo Conduit EMT 3/4" (3 m) + Cajas Estancas IP65 + Accesorios', source: 'Sinthesi Chile', qty: 22, price: 4890 },
+      { cat: 'Materiales', desc: 'Kit Etiquetado Industrial Norma TIA-606 (Cintas + Etiquetas)', source: 'Dist. Nacional', qty: 1, price: 42000 },
+      { cat: 'Herramientas', desc: 'Arriendo Plataforma Elevadora Tijera Eléctrica (Trabajo 6 m Bodega)', source: 'Arriendo Maq.', qty: 3, price: 85000 },
+      { cat: 'Herramientas', desc: 'Arriendo Equipo Certificador Redes Cat 6 (Certificación 100% enlaces)', source: 'Arriendo Instr.', qty: 2, price: 95000 },
+      { cat: 'Mano de Obra', desc: 'Cuadrilla Instalación (2 Técnicos + 1 Supervisor, 9h/día, inc. turno nocturno)', source: 'Servicio Técnico', qty: 10, price: 240000 }
+    ];
+
+    let budgetItems = JSON.parse(JSON.stringify(DEFAULT_BUDGET));
+
+    function formatCLP(num) {
+      return '$' + Math.round(num).toLocaleString('es-CL');
+    }
+
+    function renderBudgetTable() {
+      const tbody = document.getElementById('budgetTableBody');
+      tbody.innerHTML = '';
+
+      let subMat = 0, subTools = 0, subLabor = 0;
+
+      budgetItems.forEach((item, idx) => {
+        const subtotal = item.qty * item.price;
+        if (item.cat === 'Materiales') subMat += subtotal;
+        else if (item.cat === 'Herramientas') subTools += subtotal;
+        else subLabor += subtotal;
+
+        const badgeColor = item.cat === 'Materiales'
+          ? 'bg-blue-100 text-blue-800'
+          : (item.cat === 'Herramientas' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800');
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="py-1.5 px-3 font-mono text-slate-500">${String(idx + 1).padStart(2, '0')}</td>
+          <td class="py-1.5 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${item.cat}</span></td>
+          <td class="py-1.5 px-3 font-medium text-slate-800">${item.desc}</td>
+          <td class="py-1.5 px-3 text-slate-500">${item.source}</td>
+          <td class="py-1.5 px-3 text-right">
+            <input type="number" min="0" value="${item.qty}" onchange="updateBudgetRow(${idx}, 'qty', this.value)"
+              class="w-14 text-right font-mono border border-slate-300 rounded px-1.5 py-0.5 bg-white" />
+          </td>
+          <td class="py-1.5 px-3 text-right">
+            <input type="number" min="0" step="100" value="${item.price}" onchange="updateBudgetRow(${idx}, 'price', this.value)"
+              class="w-24 text-right font-mono border border-slate-300 rounded px-1.5 py-0.5 bg-white" />
+          </td>
+          <td class="py-1.5 px-3 text-right font-mono font-bold text-slate-900">${formatCLP(subtotal)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const neto = subMat + subTools + subLabor;
+      const iva = Math.round(neto * 0.19);
+      const total = neto + iva;
+
+      document.getElementById('subMaterials').textContent = formatCLP(subMat);
+      document.getElementById('subTools').textContent = formatCLP(subTools);
+      document.getElementById('subLabor').textContent = formatCLP(subLabor);
+      document.getElementById('totalNeto').textContent = formatCLP(neto);
+      document.getElementById('totalIva').textContent = formatCLP(iva);
+      document.getElementById('totalGross').textContent = formatCLP(total);
+      document.getElementById('headerKpiBudget').textContent = `Total c/IVA: ${formatCLP(total)}`;
+    }
+
+    function updateBudgetRow(idx, field, val) {
+      budgetItems[idx][field] = Math.max(0, Number(val) || 0);
+      renderBudgetTable();
+    }
+
+    function resetBudgetDefaults() {
+      budgetItems = JSON.parse(JSON.stringify(DEFAULT_BUDGET));
+      renderBudgetTable();
+      showToast('Presupuesto restaurado a valores referenciales CLP.');
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. CARTA GANTT (10 DÍAS HÁBILES) Y MATRIZ DE RIESGOS (P x I)
+    // -------------------------------------------------------------------------
+    const GANTT_TASKS = [
+      { id: 'T01', name: 'Replanteo en terreno, recepción materiales y montaje Racks R1/R2', window: 'Diurno 08:30–18:00', resp: 'Supervisor + 2 Téc.', days: [1, 2], color: 'bg-slate-700' },
+      { id: 'T02', name: 'Instalación bandeja cielo falso (2,70 m) y canaleta PVC oficinas', window: 'Diurno 08:30–18:00 (Solo canaliz.)', resp: '2 Técnicos', days: [1, 2, 3], color: 'bg-amber-600' },
+      { id: 'T03', name: 'Tendido cableado U/UTP Cat 6 LSZH oficinas y Oficina Bodega', window: 'Nocturno 18:30–23:00 (Fuera horario)', resp: '2 Técnicos', days: [3, 4, 5], color: 'bg-indigo-600' },
+      { id: 'T04', name: 'Conectorización jacks RJ45, faceplates y remate Patch Panels R1', window: 'Nocturno 18:30–23:00 (Fuera horario)', resp: '2 Técnicos', days: [5, 6], color: 'bg-indigo-600' },
+      { id: 'T05', name: 'Montaje bandeja 6,00 m y conduit EMT en Bodega (Plataforma tijera)', window: 'Diurno c/Área Segregada (Grúas)', resp: 'Supervisor + 2 Téc.', days: [4, 5, 6], color: 'bg-rose-600' },
+      { id: 'T06', name: 'Instalación APs 6m, Cámaras IP67 Patio Carga y cableado exterior PE', window: 'Diurno c/Plataforma 6m', resp: '2 Técnicos', days: [6, 7], color: 'bg-rose-600' },
+      { id: 'T07', name: 'Enlace troncal R1↔R2, montaje switches PoE+, NVR, UPS y etiquetado TIA-606', window: 'Diurno / Nocturno', resp: 'Supervisor + 1 Téc.', days: [7, 8], color: 'bg-blue-600' },
+      { id: 'T08', name: 'Certificación del 100% de enlaces Cat 6 (74 enlaces) y pruebas Wi-Fi/CCTV', window: 'Diurno / Nocturno', resp: 'Supervisor + 2 Téc.', days: [8, 9], color: 'bg-emerald-600' },
+      { id: 'T09', name: 'Entrega documentación As-Built, reportes certificación y cierre de obra', window: 'Diurno 09:00–13:00', resp: 'Supervisor', days: [10], color: 'bg-emerald-800' }
+    ];
+
+    function renderGanttTable() {
+      const tbody = document.getElementById('ganttTableBody');
+      tbody.innerHTML = '';
+      GANTT_TASKS.forEach(t => {
+        let cells = '';
+        for (let d = 1; d <= 10; d++) {
+          const active = t.days.includes(d);
+          cells += `<td class="py-1.5 px-1 text-center border-l border-slate-100">${
+            active ? `<div class="h-5 rounded ${t.color} text-white text-[10px] font-mono flex items-center justify-center font-bold">■</div>` : ''
+          }</td>`;
+        }
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="py-2 px-3 font-mono font-bold text-slate-600">${t.id}</td>
+          <td class="py-2 px-3 font-semibold text-slate-900">${t.name}</td>
+          <td class="py-2 px-3 text-[11px] text-slate-600">${t.window}</td>
+          <td class="py-2 px-3 text-[11px] font-medium text-slate-700">${t.resp}</td>
+          ${cells}
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    const RISKS_DATA = [
+      { id: 'R-01', type: 'Seguridad / Plazo', desc: 'Colisión o interferencia con grúas horquilla en Bodega (08:00–18:00) durante montaje a 6 m.', p: 3, i: 5, mit: 'Segregación física con barreras y conos en pasillo intervenido, señalero en piso y plataforma tijera con baliza.' },
+      { id: 'R-02', type: 'Técnico / Norma', desc: 'Enlaces hacia Bodega/Patio de Carga superan los 90 m desde MDF invalidando certificación Cat 6.', p: 4, i: 5, mit: 'Implementación de Rack Secundario R2 (IDF 12U) en muro oeste de bodega, acotando enlaces a ≤ 54,2 m.' },
+      { id: 'R-03', type: 'Plazo / Operación', desc: 'Retraso en cableado de oficinas por restricción de no intervenir puestos entre 08:30 y 18:00.', p: 3, i: 4, mit: 'Separación de cuadrilla: canalización en horario diurno y tendido/remate de cables en turno vespertino/nocturno.' },
+      { id: 'R-04', type: 'Técnico / Ambiental', desc: 'Degradación de cable o ingreso de humedad en AP y cámaras exteriores del Patio de Carga.', p: 3, i: 4, mit: 'Uso exclusivo de cable U/UTP Cat 6 exterior cubierta PE, cajas estancas IP65 y prensaestopas herméticos.' },
+      { id: 'R-05', type: 'Costo / Logística', desc: 'Variación de precios o quiebre de stock de switches PoE+ 802.3at o cajas LSZH en La Serena.', p: 2, i: 4, mit: 'Orden de compra anticipada en Día 1 con proveedores nacionales (Sinthesi / LK.cl) y 10% de merma presupuestada.' },
+      { id: 'R-06', type: 'Técnico / Wi-Fi', desc: 'Atenuación de señal inalámbrica entre estanterías metálicas de 8 m de altura en Bodega.', p: 3, i: 3, mit: 'Ubicación de BOD-AP01 y BOD-AP02 a 6,00 m alineados con el eje longitudinal de los pasillos entre estanterías.' }
+    ];
+
+    function renderRisksTable() {
+      const tbody = document.getElementById('risksTableBody');
+      tbody.innerHTML = '';
+      RISKS_DATA.forEach(r => {
+        const score = r.p * r.i;
+        const badge = score >= 15
+          ? 'bg-rose-600 text-white'
+          : (score >= 8 ? 'bg-amber-500 text-white' : 'bg-emerald-600 text-white');
+        const level = score >= 15 ? 'CRÍTICO' : (score >= 8 ? 'MEDIO' : 'BAJO');
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50';
+        tr.innerHTML = `
+          <td class="py-2 px-3 font-mono font-bold text-slate-700">${r.id}</td>
+          <td class="py-2 px-3 font-semibold text-slate-600">${r.type}</td>
+          <td class="py-2 px-3 font-medium text-slate-900">${r.desc}</td>
+          <td class="py-2 px-3 text-center font-mono font-bold">${r.p}</td>
+          <td class="py-2 px-3 text-center font-mono font-bold">${r.i}</td>
+          <td class="py-2 px-3 text-center"><span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${badge}">${score} (${level})</span></td>
+          <td class="py-2 px-3 text-slate-700">${r.mit}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. NAVEGACIÓN POR PESTAÑAS, EXPORTACIÓN DE INFORME Y UTILIDADES UI
+    // -------------------------------------------------------------------------
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.getAttribute('data-tab');
+        document.querySelectorAll('.tab-panel').forEach(p => {
+          p.classList.toggle('hidden', p.id !== target);
+        });
+      });
+    });
+
+    document.getElementById('authorInput').addEventListener('input', (e) => {
+      document.getElementById('printAuthorName').textContent = e.target.value || 'Estudiante INACAP';
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastBanner');
+      document.getElementById('toastText').textContent = msg;
+      toast.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => toast.classList.add('hidden'), 3200);
+    }
+
+    function exportFullReport() {
+      document.getElementById('printAuthorName').textContent = document.getElementById('authorInput').value || 'Cristóbal Plaza';
+      document.getElementById('printDate').textContent = new Date().toLocaleDateString('es-CL');
+      window.print();
+    }
+
+    // Inicialización al cargar la ventana
+    window.addEventListener('DOMContentLoaded', () => {
+      renderFloorPlan();
+      renderLinksTable();
+      renderRackElevation();
+      renderPatchPlanTable();
+      renderBudgetTable();
+      renderGanttTable();
+      renderRisksTable();
+    });
+  </script>
+</body>
+</html>
